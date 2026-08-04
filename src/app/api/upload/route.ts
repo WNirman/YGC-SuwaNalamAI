@@ -1,11 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
-
-// Allow large file uploads
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
@@ -20,14 +16,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-
     const uploadedFiles = [];
 
     for (const file of files) {
-      // Validate file type
       const validTypes = [
         'application/pdf',
         'image/png',
@@ -37,18 +28,15 @@ export async function POST(request: NextRequest) {
       ];
 
       if (!validTypes.includes(file.type)) {
-        continue; // Skip invalid files
+        continue;
       }
 
-      // Generate unique filename
       const fileId = randomUUID();
       const ext = file.name.split('.').pop() || 'pdf';
       const storedName = `${fileId}.${ext}`;
-      const filePath = path.join(uploadsDir, storedName);
 
-      // Write file to disk
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await writeFile(filePath, buffer);
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
 
       uploadedFiles.push({
         id: fileId,
@@ -56,7 +44,7 @@ export async function POST(request: NextRequest) {
         storedName,
         fileSize: file.size,
         fileType: file.type,
-        filePath,
+        base64,
         uploadedAt: new Date().toISOString(),
       });
     }
