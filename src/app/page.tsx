@@ -69,6 +69,8 @@ import {
   MOCK_TRENDS,
   MOCK_TRENDS_SUMMARY,
   MOCK_CROSS_CHECK_SUMMARY,
+  getMockData,
+  answerQuestionMock,
 } from '@/lib/mockData';
 import { useI18n, Language } from '@/lib/i18n';
 import { LanguageSelector } from '@/components/LanguageSelector';
@@ -121,7 +123,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  const [apiKeySet, setApiKeySet] = useState(false);
+  const [apiKeySet, setApiKeySet] = useState(true);
   const [apiKeyError, setApiKeyError] = useState('');
 
   // Check for API key on mount
@@ -166,7 +168,6 @@ export default function Dashboard() {
     setProcessingStep(t('upload.demoProcessing'));
 
     setTimeout(() => {
-      // Simulate loading documents
       const demoDocs: UploadedDocument[] = [
         { id: 'mock-doc-0', fileName: 'Metro_Labs_Oct2024.pdf', fileSize: 184022, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
         { id: 'mock-doc-1', fileName: 'Dr_Jenkins_Prescription_Dec2024.pdf', fileSize: 92435, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
@@ -175,24 +176,19 @@ export default function Dashboard() {
         { id: 'mock-doc-4', fileName: 'Metro_Labs_May2025.pdf', fileSize: 204910, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
       ];
 
-      setDocuments(demoDocs);
-      setExtractedData(MOCK_EXTRACTED_DATA);
-      setTimeline(MOCK_TIMELINE);
-      setPatient(MOCK_PATIENT);
-      setInteractions(MOCK_INTERACTIONS);
-      setAlerts(MOCK_ALERTS);
-      setOverallRiskLevel('critical');
-      setCrossCheckSummary(MOCK_CROSS_CHECK_SUMMARY);
-      setTrends(MOCK_TRENDS);
-      setTrendsSummary(MOCK_TRENDS_SUMMARY);
+      const mock = getMockData(language);
 
-      // Set suggested questions
-      setSuggestedQuestions([
-        { text: 'Are there any drug interactions in my prescriptions?', category: 'medications' },
-        { text: 'Did I get prescribed Amoxicillin despite my Penicillin allergy?', category: 'allergies' },
-        { text: 'What is the trend for my kidney function (creatinine)?', category: 'lab_results' },
-        { text: 'Explain my diabetes blood sugar trend (HbA1c).', category: 'lab_results' },
-      ]);
+      setDocuments(demoDocs);
+      setExtractedData(mock.extractedData);
+      setTimeline(mock.timeline);
+      setPatient(mock.patient);
+      setInteractions(mock.interactions);
+      setAlerts(mock.alerts);
+      setOverallRiskLevel(mock.overallRiskLevel);
+      setCrossCheckSummary(mock.crossCheckSummary);
+      setTrends(mock.trends);
+      setTrendsSummary(mock.trendsSummary);
+      setSuggestedQuestions(mock.suggestedQuestions);
 
       setProcessingStep(t('upload.demoSuccess'));
       setTimeout(() => {
@@ -201,6 +197,21 @@ export default function Dashboard() {
       }, 800);
     }, 1000);
   };
+
+  // Dynamically update demo data if language changes
+  useEffect(() => {
+    if (documents.length > 0 && documents[0].id.startsWith('mock-doc-')) {
+      const mock = getMockData(language);
+      setExtractedData(mock.extractedData);
+      setTimeline(mock.timeline);
+      setInteractions(mock.interactions);
+      setAlerts(mock.alerts);
+      setCrossCheckSummary(mock.crossCheckSummary);
+      setTrends(mock.trends);
+      setTrendsSummary(mock.trendsSummary);
+      setSuggestedQuestions(mock.suggestedQuestions);
+    }
+  }, [language, documents]);
 
   // ============================================================
   // File Upload Handler
@@ -266,7 +277,7 @@ export default function Dashboard() {
       const analyzeRes = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: uploadData.files }),
+        body: JSON.stringify({ files: uploadData.files, language }),
       });
       const analyzeData = await analyzeRes.json();
 
@@ -309,6 +320,7 @@ export default function Dashboard() {
             allergies: allAllergies,
             diagnoses: allDiagnoses,
             patientInfo: JSON.stringify(analyzeData.patient),
+            language,
           }),
         });
         const crossCheckData = await crossCheckRes.json();
@@ -335,7 +347,7 @@ export default function Dashboard() {
         const trendsRes = await fetch('/api/trends', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ labData }),
+          body: JSON.stringify({ labData, language }),
         });
         const trendsData = await trendsRes.json();
 
@@ -345,12 +357,7 @@ export default function Dashboard() {
         }
       }
 
-      setSuggestedQuestions([
-        { text: 'Are there any drug interactions in my prescriptions?', category: 'medications' },
-        { text: 'What are my abnormal lab results?', category: 'lab_results' },
-        { text: 'Do any medications conflict with my allergies?', category: 'allergies' },
-        { text: 'Summarize my medical history from these documents', category: 'general' },
-      ]);
+      setSuggestedQuestions(getMockData(language).suggestedQuestions);
 
       setProcessingStep(t('upload.complete'));
       setTimeout(() => {
@@ -418,6 +425,30 @@ export default function Dashboard() {
     setIsChatLoading(true);
 
     try {
+      const isDemo = documents.length > 0 && documents[0].id.startsWith('mock-doc-');
+      if (isDemo) {
+        const mockReply = answerQuestionMock(text, language);
+        const assistantMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: mockReply.answer,
+          timestamp: new Date().toISOString(),
+          confidenceScore: mockReply.confidenceScore,
+          confidenceLevel: mockReply.confidenceLevel,
+          sourceDocuments: mockReply.sourceDocuments,
+          shouldConsultDoctor: mockReply.shouldConsultDoctor,
+          isHighRisk: mockReply.isHighRisk,
+        };
+        setChatMessages((prev) => [...prev, assistantMsg]);
+        if (mockReply.suggestedFollowUp) {
+          setSuggestedQuestions(
+            mockReply.suggestedFollowUp.map((q) => ({ text: q, category: 'general' as const }))
+          );
+        }
+        setIsChatLoading(false);
+        return;
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -425,6 +456,7 @@ export default function Dashboard() {
           question: text,
           documents: extractedData,
           chatHistory: chatMessages,
+          language,
         }),
       });
       const data = await res.json();
@@ -511,111 +543,6 @@ export default function Dashboard() {
     return <LanguageSelector allowClose onComplete={() => setShowLanguageModal(false)} />;
   }
 
-  // ============================================================
-  // STEP 3: API Key Setup Modal
-  // ============================================================
-  if (!apiKeySet) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <div className="api-key-setup glass-card" style={{ padding: '48px', maxWidth: '520px', width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
-            <button
-              onClick={() => setShowLanguageModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-secondary)',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-              }}
-            >
-              <Globe size={14} />
-              {language === 'en' ? '🇬🇧 English' : language === 'si' ? '🇱🇰 සිංහල' : '🇱🇰 தமிழ்'}
-            </button>
-          </div>
-
-          <div className="setup-icon">
-            <Sparkles size={32} />
-          </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '8px' }}>
-            {t('apiKey.title')}
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.9rem' }}>
-            {t('apiKey.prompt')}<br />
-            Get keys at:{' '}
-            <a
-              href="https://aistudio.google.com/apikey"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: 'var(--accent-primary)', marginRight: '12px' }}
-            >
-              Google AI Studio
-            </a>
-            <a
-              href="https://platform.openai.com/api-keys"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: 'var(--accent-primary)' }}
-            >
-              OpenAI Platform
-            </a>
-          </p>
-          {apiKeyError && (
-            <p style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginBottom: '12px' }}>
-              {apiKeyError}
-            </p>
-          )}
-          <div className="api-key-input-group">
-            <input
-              type="password"
-              placeholder={t('apiKey.inputPlaceholder')}
-              autoComplete="new-password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSetApiKey()}
-            />
-            <button className="btn btn-primary" onClick={handleSetApiKey}>
-              {t('apiKey.setKeyButton')}
-            </button>
-          </div>
-          <div style={{ marginTop: '12px' }}>
-            <button
-              className="btn btn-secondary"
-              style={{ width: '100%' }}
-              onClick={async () => {
-                try {
-                  const res = await fetch('/api/set-key', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apiKey: 'demo-mode' }),
-                  });
-                  const data = await res.json();
-                  if (data.success) {
-                    setApiKeySet(true);
-                    setApiKeyError('');
-                  } else {
-                    setApiKeyError(data.error || t('apiKey.errorGeneric'));
-                  }
-                } catch {
-                  setApiKeyError(t('apiKey.errorConnection'));
-                }
-              }}
-            >
-              {t('apiKey.demoModeButton')}
-            </button>
-          </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '16px' }}>
-            {t('apiKey.keyMemoryNotice')}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // ============================================================
   // STEP 4: Main Application (Loaded in Selected Language)
@@ -724,39 +651,7 @@ export default function Dashboard() {
             <MessageCircle size={20} className="nav-icon" />
             {t('dashboard.chatTabName')}
           </button>
-          <button
-            className="nav-item"
-            style={{ marginTop: 'var(--space-md)', color: 'var(--color-danger)' }}
-            onClick={async () => {
-              try {
-                await fetch('/api/set-key', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ apiKey: 'reset' }),
-                });
-                setApiKeySet(false);
-                setApiKey('');
-                setDocuments([]);
-                setExtractedData([]);
-                setTimeline([]);
-                setPatient(null);
-                setInteractions([]);
-                setAlerts([]);
-                setTrends([]);
-                setTrendsSummary('');
-                setChatMessages([]);
-                setSuggestedQuestions([]);
-                setOverallRiskLevel('info');
-                setCrossCheckSummary('');
-                setActiveTab('upload');
-              } catch (error) {
-                console.error('Failed to reset key:', error);
-              }
-            }}
-          >
-            <ShieldAlert size={20} className="nav-icon" style={{ color: 'var(--color-danger)' }} />
-            {t('sidebar.resetKey')}
-          </button>
+
         </nav>
 
         {/* Patient Info (if available) */}
@@ -859,16 +754,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-lg)' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={loadDemoDataset}
-                style={{ width: '100%', maxWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <Sparkles size={16} style={{ color: 'var(--accent-primary)' }} />
-                {t('upload.demoButton')}
-              </button>
-            </div>
+
 
             {/* Uploaded Files List */}
             {documents.length > 0 && (

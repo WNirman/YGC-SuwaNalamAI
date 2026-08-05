@@ -9,10 +9,11 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { question, documents, chatHistory } = body as {
+    const { question, documents, chatHistory, language } = body as {
       question: string;
       documents: ExtractedData[];
       chatHistory: ChatMessage[];
+      language?: string;
     };
 
     if (!question || question.trim().length === 0) {
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
     const result = await answerQuestion(
       question,
       documents,
-      chatHistory || []
+      chatHistory || [],
+      language || 'en'
     );
 
     const message: ChatMessage = {

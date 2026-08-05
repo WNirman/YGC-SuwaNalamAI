@@ -8,8 +8,9 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { labData } = body as {
+    const { labData, language } = body as {
       labData: { date: string; results: LabResult[] }[];
+      language?: string;
     };
 
     if (!labData || labData.length === 0) {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const result = await analyzeLabTrends(validData);
+    const result = await analyzeLabTrends(validData, language || 'en');
 
     return NextResponse.json({
       success: true,

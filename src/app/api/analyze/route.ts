@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { extractDocumentData } from '@/lib/openai';
@@ -11,7 +11,8 @@ export const maxDuration = 120;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { files } = body as {
+    const { files, language } = body as {
+      language?: string;
       files: {
         id: string;
         fileName: string;
@@ -48,7 +49,8 @@ export async function POST(request: NextRequest) {
         const extracted = await extractDocumentData(
           fileBuffer,
           file.fileType,
-          file.fileName
+          file.fileName,
+          language || 'en'
         );
 
         extractedDocuments.push({

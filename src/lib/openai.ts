@@ -80,6 +80,44 @@ function getTextClient(): { client: OpenAI; model: string } {
   );
 }
 
+function getLanguageInstruction(language?: string): string {
+  if (language === 'si') {
+    return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide ALL human-readable descriptions, explanations, summaries, notes, and recommendations strictly in Sinhala (සිංහල). Keep brand names, generic medication names, and lab test titles in their standard medical form if needed, but explain everything in natural, fluent Sinhala.';
+  }
+  if (language === 'ta') {
+    return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide ALL human-readable descriptions, explanations, summaries, notes, and recommendations strictly in Tamil (தமிழ்). Keep brand names, generic medication names, and lab test titles in their standard medical form if needed, but explain everything in natural, fluent Tamil.';
+  }
+  return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide all human-readable text in clear, patient-friendly English.';
+}
+
+export async function translateText(
+  text: string,
+  targetLanguage: string
+): Promise<string> {
+  if (!text || !text.trim() || targetLanguage === 'en') return text;
+  const { client, model } = getTextClient();
+  const langName = targetLanguage === 'si' ? 'Sinhala (සිංහල)' : targetLanguage === 'ta' ? 'Tamil (தமிழ்)' : 'English';
+  
+  try {
+    const response = await client.chat.completions.create({
+      model,
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a professional medical translator. Translate the given text into ${langName}. Preserve medical terms, numbers, and drug names. Output ONLY the translated text without extra explanation.`,
+        },
+        { role: 'user', content: text },
+      ],
+      temperature: 0.1,
+    });
+    return response.choices[0]?.message?.content?.trim() || text;
+  } catch (err) {
+    console.error('Translation error:', err);
+    return text;
+  }
+}
+
 // ============================================================
 // JSON Parser
 // ============================================================
@@ -123,15 +161,17 @@ function parseAIResponse<T>(text: string): T {
 export async function extractDocumentData(
   fileBuffer: Buffer,
   mimeType: string,
-  fileName: string
+  fileName: string,
+  language: string = 'en'
 ): Promise<ExtractedData> {
   const { client, model } = getVisionClient();
+  const langPrompt = getLanguageInstruction(language);
 
   // Convert buffer to base64 inline data URL
   const base64Data = fileBuffer.toString('base64');
   const imageUrl = `data:${mimeType};base64,${base64Data}`;
 
-  console.log(`[AI] Extracting document: ${fileName} using model: ${model}`);
+  console.log(`[AI] Extracting document: ${fileName} using model: ${model} (language: ${language})`);
 
   const response = await client.chat.completions.create({
     model,
@@ -139,7 +179,7 @@ export async function extractDocumentData(
     messages: [
       {
         role: 'system',
-        content: 'You are a medical JSON extraction engine. Output ONLY valid JSON matching the requested schema. DO NOT output <think> tags, reasoning, or explanations. Start your output directly with { and end with }.',
+        content: 'You are a medical JSON extraction engine. Output ONLY valid JSON matching the requested schema. DO NOT output <think> tags, reasoning, or explanations. Start your output directly with { and end with }.' + langPrompt,
       },
       {
         role: 'user',
@@ -150,7 +190,7 @@ export async function extractDocumentData(
           },
           {
             type: 'text',
-            text: DOCUMENT_EXTRACTION_PROMPT + '\n\nCRITICAL INSTRUCTION: Return ONLY the JSON object. Zero reasoning text. Zero <think> tags.',
+            text: DOCUMENT_EXTRACTION_PROMPT + langPrompt + '\n\nCRITICAL INSTRUCTION: Return ONLY the JSON object. Zero reasoning text. Zero <think> tags.',
           },
         ],
       },
@@ -179,25 +219,27 @@ export async function crossCheckPrescriptions(
   allMedications: Medication[],
   allergies: string[],
   diagnoses: string[],
-  patientInfo: string
+  patientInfo: string,
+  language: string = 'en'
 ): Promise<{
   interactions: DrugInteraction[];
   overallRiskLevel: AlertSeverity;
   summary: string;
 }> {
   const { client, model } = getTextClient();
+  const langPrompt = getLanguageInstruction(language);
 
   const prompt = CROSS_CHECK_PROMPT
     .replace('{PATIENT_DATA}', patientInfo)
     .replace('{MEDICATIONS_DATA}', JSON.stringify(allMedications, null, 2))
     .replace('{ALLERGIES_DATA}', JSON.stringify(allergies))
-    .replace('{DIAGNOSES_DATA}', JSON.stringify(diagnoses));
+    .replace('{DIAGNOSES_DATA}', JSON.stringify(diagnoses)) + langPrompt;
 
   const response = await client.chat.completions.create({
     model,
     max_tokens: 2048,
     messages: [
-      { role: 'system', content: SYSTEM_INSTRUCTION },
+      { role: 'system', content: SYSTEM_INSTRUCTION + langPrompt },
       { role: 'user', content: prompt },
     ],
     temperature: 0.2,
@@ -233,21 +275,23 @@ export async function crossCheckPrescriptions(
 // ============================================================
 
 export async function analyzeLabTrends(
-  labResults: { date: string; results: LabResult[] }[]
+  labResults: { date: string; results: LabResult[] }[],
+  language: string = 'en'
 ): Promise<{
   trends: LabTrend[];
   overallSummary: string;
 }> {
   const { client, model } = getTextClient();
+  const langPrompt = getLanguageInstruction(language);
 
   const prompt = TREND_ANALYSIS_PROMPT
-    .replace('{LAB_DATA}', JSON.stringify(labResults, null, 2));
+    .replace('{LAB_DATA}', JSON.stringify(labResults, null, 2)) + langPrompt;
 
   const response = await client.chat.completions.create({
     model,
     max_tokens: 2048,
     messages: [
-      { role: 'system', content: SYSTEM_INSTRUCTION },
+      { role: 'system', content: SYSTEM_INSTRUCTION + langPrompt },
       { role: 'user', content: prompt },
     ],
     temperature: 0.2,
@@ -275,7 +319,8 @@ export async function analyzeLabTrends(
 export async function answerQuestion(
   question: string,
   documentsData: ExtractedData[],
-  chatHistory: ChatMessage[]
+  chatHistory: ChatMessage[],
+  language: string = 'en'
 ): Promise<{
   answer: string;
   confidenceScore: number;
@@ -286,6 +331,7 @@ export async function answerQuestion(
   suggestedFollowUp: string[];
 }> {
   const { client, model } = getTextClient();
+  const langPrompt = getLanguageInstruction(language);
 
   const historyText = chatHistory
     .slice(-6)
@@ -295,13 +341,13 @@ export async function answerQuestion(
   const prompt = QA_PROMPT
     .replace('{DOCUMENTS_DATA}', JSON.stringify(documentsData, null, 2))
     .replace('{QUESTION}', question)
-    .replace('{CHAT_HISTORY}', historyText || 'No previous conversation');
+    .replace('{CHAT_HISTORY}', historyText || 'No previous conversation') + langPrompt;
 
   const response = await client.chat.completions.create({
     model,
     max_tokens: 2048,
     messages: [
-      { role: 'system', content: SYSTEM_INSTRUCTION },
+      { role: 'system', content: SYSTEM_INSTRUCTION + langPrompt },
       { role: 'user', content: prompt },
     ],
     temperature: 0.3,

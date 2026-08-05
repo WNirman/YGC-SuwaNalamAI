@@ -14,11 +14,13 @@ export async function POST(request: NextRequest) {
       allergies,
       diagnoses,
       patientInfo,
+      language,
     } = body as {
       medications: Medication[];
       allergies: string[];
       diagnoses: string[];
       patientInfo: string;
+      language?: string;
     };
 
     if (!medications || medications.length === 0) {
@@ -35,7 +37,8 @@ export async function POST(request: NextRequest) {
       medications,
       allergies || [],
       diagnoses || [],
-      patientInfo || 'Not available'
+      patientInfo || 'Not available',
+      language || 'en'
     );
 
     // Convert interactions to alerts for the UI
