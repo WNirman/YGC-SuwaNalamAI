@@ -25,7 +25,6 @@ import {
   Stethoscope,
   FlaskConical,
   ShieldAlert,
-
   ArrowUpRight,
   ArrowDownRight,
   Minus,
@@ -34,6 +33,7 @@ import {
   Bot,
   Sparkles,
   XCircle,
+  Globe,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -70,6 +70,9 @@ import {
   MOCK_TRENDS_SUMMARY,
   MOCK_CROSS_CHECK_SUMMARY,
 } from '@/lib/mockData';
+import { useI18n, Language } from '@/lib/i18n';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import { DisclaimerScreen } from '@/components/DisclaimerScreen';
 
 // Register Chart.js components
 ChartJS.register(
@@ -89,6 +92,16 @@ type TabType = 'upload' | 'timeline' | 'alerts' | 'trends' | 'chat';
 // Main Dashboard Component
 // ============================================================
 export default function Dashboard() {
+  const {
+    t,
+    language,
+    setLanguage,
+    hasChosenLanguage,
+    setHasChosenLanguage,
+    showLanguageModal,
+    setShowLanguageModal,
+  } = useI18n();
+
   // State
   const [activeTab, setActiveTab] = useState<TabType>('upload');
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
@@ -113,7 +126,6 @@ export default function Dashboard() {
 
   // Check for API key on mount
   useEffect(() => {
-    // Check if running with env variable
     fetch('/api/check-key')
       .then((res) => res.json())
       .then((data) => {
@@ -128,7 +140,7 @@ export default function Dashboard() {
 
   const handleSetApiKey = async () => {
     if (!apiKey.trim()) {
-      setApiKeyError('Please enter an API key');
+      setApiKeyError(t('apiKey.errorEmpty'));
       return;
     }
     try {
@@ -142,17 +154,17 @@ export default function Dashboard() {
         setApiKeySet(true);
         setApiKeyError('');
       } else {
-        setApiKeyError(data.error || 'Failed to set API key');
+        setApiKeyError(data.error || t('apiKey.errorGeneric'));
       }
     } catch {
-      setApiKeyError('Failed to connect to server');
+      setApiKeyError(t('apiKey.errorConnection'));
     }
   };
 
   const loadDemoDataset = () => {
     setIsProcessing(true);
-    setProcessingStep('Loading sample hackathon medical files...');
-    
+    setProcessingStep(t('upload.demoProcessing'));
+
     setTimeout(() => {
       // Simulate loading documents
       const demoDocs: UploadedDocument[] = [
@@ -162,7 +174,7 @@ export default function Dashboard() {
         { id: 'mock-doc-3', fileName: 'Dr_Chen_Prescription_Mar2025.pdf', fileSize: 128450, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
         { id: 'mock-doc-4', fileName: 'Metro_Labs_May2025.pdf', fileSize: 204910, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
       ];
-      
+
       setDocuments(demoDocs);
       setExtractedData(MOCK_EXTRACTED_DATA);
       setTimeline(MOCK_TIMELINE);
@@ -173,7 +185,7 @@ export default function Dashboard() {
       setCrossCheckSummary(MOCK_CROSS_CHECK_SUMMARY);
       setTrends(MOCK_TRENDS);
       setTrendsSummary(MOCK_TRENDS_SUMMARY);
-      
+
       // Set suggested questions
       setSuggestedQuestions([
         { text: 'Are there any drug interactions in my prescriptions?', category: 'medications' },
@@ -181,8 +193,8 @@ export default function Dashboard() {
         { text: 'What is the trend for my kidney function (creatinine)?', category: 'lab_results' },
         { text: 'Explain my diabetes blood sugar trend (HbA1c).', category: 'lab_results' },
       ]);
-      
-      setProcessingStep('Data loaded successfully!');
+
+      setProcessingStep(t('upload.demoSuccess'));
       setTimeout(() => {
         setActiveTab('timeline');
         setIsProcessing(false);
@@ -205,17 +217,6 @@ export default function Dashboard() {
     setDocuments((prev) => [...prev, ...newDocs]);
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'image/png': ['.png'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/webp': ['.webp'],
-    },
-    multiple: true,
-  });
-
   const removeDocument = (id: string) => {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
   };
@@ -227,36 +228,26 @@ export default function Dashboard() {
     if (documents.length === 0) return;
 
     setIsProcessing(true);
-    setProcessingStep('Uploading documents...');
+    setProcessingStep(t('upload.uploadingFiles'));
 
     try {
-      // Step 1: Upload files
-      const filesToUpload = documents.filter(
-        (d) => d.status === 'uploading' || d.status === 'error'
-      );
-
-      // Get actual File objects from the dropzone
       const inputEl = document.querySelector('input[type="file"]') as HTMLInputElement;
       const formData = new FormData();
 
-      // Re-get files from the dropzone input
       if (inputEl?.files) {
         for (const file of Array.from(inputEl.files)) {
           formData.append('files', file);
         }
       }
 
-      // If no files from input, create from documents state
       if (formData.getAll('files').length === 0) {
-        // Fallback: we need to re-trigger upload from actual File objects
-        // For this, we'll use a global file store
         const storedFiles = (window as unknown as { __mediscan_files?: File[] }).__mediscan_files || [];
         for (const file of storedFiles) {
           formData.append('files', file);
         }
       }
 
-      setProcessingStep('Uploading files to server...');
+      setProcessingStep(t('upload.uploadingFiles'));
       const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -267,13 +258,11 @@ export default function Dashboard() {
         throw new Error(uploadData.error || 'Upload failed');
       }
 
-      // Update document statuses
       setDocuments((prev) =>
         prev.map((d) => ({ ...d, status: 'processing' as const }))
       );
 
-      // Step 2: Analyze documents with AI
-      setProcessingStep('AI is extracting data from your documents...');
+      setProcessingStep(t('upload.analyzingDocuments'));
       const analyzeRes = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -292,8 +281,7 @@ export default function Dashboard() {
         prev.map((d) => ({ ...d, status: 'complete' as const }))
       );
 
-      // Step 3: Cross-check prescriptions
-      setProcessingStep('Cross-checking prescriptions for interactions...');
+      setProcessingStep(t('upload.crossCheck'));
       const allMedications = analyzeData.documents.flatMap(
         (doc: ExtractedData) => doc.medications || []
       );
@@ -333,8 +321,7 @@ export default function Dashboard() {
         }
       }
 
-      // Step 4: Analyze lab trends
-      setProcessingStep('Analyzing lab result trends...');
+      setProcessingStep(t('upload.analyzingTrends'));
       const labData = analyzeData.documents
         .filter(
           (doc: ExtractedData) => doc.labResults && doc.labResults.length > 0
@@ -358,7 +345,6 @@ export default function Dashboard() {
         }
       }
 
-      // Set default suggested questions
       setSuggestedQuestions([
         { text: 'Are there any drug interactions in my prescriptions?', category: 'medications' },
         { text: 'What are my abnormal lab results?', category: 'lab_results' },
@@ -366,8 +352,7 @@ export default function Dashboard() {
         { text: 'Summarize my medical history from these documents', category: 'general' },
       ]);
 
-      // Auto-switch to timeline after processing
-      setProcessingStep('Analysis complete!');
+      setProcessingStep(t('upload.complete'));
       setTimeout(() => {
         setActiveTab('timeline');
         setIsProcessing(false);
@@ -399,7 +384,6 @@ export default function Dashboard() {
     [onDrop]
   );
 
-  // Override dropzone with stored version
   const dropzone = useDropzone({
     onDrop: onDropWithStore,
     accept: {
@@ -486,9 +470,6 @@ export default function Dashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  // ============================================================
-  // Computed Values
-  // ============================================================
   const totalMedications = extractedData.reduce(
     (sum, doc) => sum + (doc.medications?.length || 0),
     0
@@ -499,9 +480,6 @@ export default function Dashboard() {
   );
   const alertCount = alerts.length;
 
-  // ============================================================
-  // Render Helpers
-  // ============================================================
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -515,55 +493,60 @@ export default function Dashboard() {
   };
 
   // ============================================================
-  // Disclaimer Modal
+  // STEP 1: Full Window Disclaimer Screen
   // ============================================================
   if (!disclaimerAccepted) {
-    return (
-      <div className="disclaimer-modal-overlay">
-        <div className="disclaimer-modal">
-          <div className="modal-icon">
-            <ShieldAlert size={32} />
-          </div>
-          <h2>Medical Disclaimer</h2>
-          <p>
-            <strong>සුව நலம் AI is NOT a medical device and does NOT provide medical diagnoses, 
-            treatment recommendations, or medical advice.</strong>
-            <br /><br />
-            This tool analyzes your uploaded documents to help you understand your medical records. 
-            All findings, including drug interaction alerts and lab trend analysis, are for 
-            <strong> informational purposes only</strong>.
-            <br /><br />
-            Always consult a qualified healthcare professional (doctor or pharmacist) before making 
-            any decisions about your medications or health.
-          </p>
-          <button
-            className="btn btn-primary"
-            onClick={() => setDisclaimerAccepted(true)}
-            style={{ width: '100%', padding: '14px' }}
-          >
-            <Shield size={18} />
-            I Understand — Continue
-          </button>
-        </div>
-      </div>
-    );
+    return <DisclaimerScreen onAccept={() => setDisclaimerAccepted(true)} />;
   }
 
   // ============================================================
-  // API Key Setup
+  // STEP 2: Language Selection Page (After Disclaimer)
+  // ============================================================
+  if (!hasChosenLanguage) {
+    return <LanguageSelector onComplete={() => setHasChosenLanguage(true)} />;
+  }
+
+  // Optional manual modal switch
+  if (showLanguageModal) {
+    return <LanguageSelector allowClose onComplete={() => setShowLanguageModal(false)} />;
+  }
+
+  // ============================================================
+  // STEP 3: API Key Setup Modal
   // ============================================================
   if (!apiKeySet) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="api-key-setup glass-card" style={{ padding: '48px' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div className="api-key-setup glass-card" style={{ padding: '48px', maxWidth: '520px', width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+            <button
+              onClick={() => setShowLanguageModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              <Globe size={14} />
+              {language === 'en' ? '🇬🇧 English' : language === 'si' ? '🇱🇰 සිංහල' : '🇱🇰 தமிழ்'}
+            </button>
+          </div>
+
           <div className="setup-icon">
             <Sparkles size={32} />
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '8px' }}>
-            Welcome to සුව நலம் AI
+            {t('apiKey.title')}
           </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-            To get started, enter your Gemini API Key or OpenAI API Key.<br />
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.9rem' }}>
+            {t('apiKey.prompt')}<br />
             Get keys at:{' '}
             <a
               href="https://aistudio.google.com/apikey"
@@ -590,14 +573,14 @@ export default function Dashboard() {
           <div className="api-key-input-group">
             <input
               type="password"
-              placeholder="sk-..."
+              placeholder={t('apiKey.inputPlaceholder')}
               autoComplete="new-password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSetApiKey()}
             />
             <button className="btn btn-primary" onClick={handleSetApiKey}>
-              Start
+              {t('apiKey.setKeyButton')}
             </button>
           </div>
           <div style={{ marginTop: '12px' }}>
@@ -616,18 +599,18 @@ export default function Dashboard() {
                     setApiKeySet(true);
                     setApiKeyError('');
                   } else {
-                    setApiKeyError(data.error || 'Failed to set API key');
+                    setApiKeyError(data.error || t('apiKey.errorGeneric'));
                   }
                 } catch {
-                  setApiKeyError('Failed to connect to server');
+                  setApiKeyError(t('apiKey.errorConnection'));
                 }
               }}
             >
-              Try Demo / Mock Mode (No Key Required)
+              {t('apiKey.demoModeButton')}
             </button>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '16px' }}>
-            Your key is stored only in server memory and never persisted.
+            {t('apiKey.keyMemoryNotice')}
           </p>
         </div>
       </div>
@@ -635,7 +618,7 @@ export default function Dashboard() {
   }
 
   // ============================================================
-  // Main Render
+  // STEP 4: Main Application (Loaded in Selected Language)
   // ============================================================
   return (
     <div className="app-layout">
@@ -654,9 +637,43 @@ export default function Dashboard() {
             <Stethoscope size={22} />
           </div>
           <div>
-            <h1>සුව நலம் AI</h1>
-            <span>Medical Report Analyzer</span>
+            <h1>{t('dashboard.logo')}</h1>
+            <span>{t('dashboard.logoSubtitle')}</span>
           </div>
+        </div>
+
+        {/* Language Switcher Bar in Sidebar */}
+        <div
+          style={{
+            margin: '0 0 16px 0',
+            padding: '10px 14px',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            <Globe size={16} style={{ color: 'var(--accent-primary)' }} />
+            <span>{t('language.switchLanguage')}:</span>
+          </div>
+          <button
+            onClick={() => setShowLanguageModal(true)}
+            style={{
+              background: 'var(--accent-primary-dim)',
+              border: '1px solid var(--border-color-hover)',
+              color: 'var(--accent-primary)',
+              borderRadius: '8px',
+              padding: '4px 10px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {language === 'en' ? '🇬🇧 EN' : language === 'si' ? '🇱🇰 SI' : '🇱🇰 TA'}
+          </button>
         </div>
 
         <nav className="sidebar-nav">
@@ -665,7 +682,7 @@ export default function Dashboard() {
             onClick={() => { setActiveTab('upload'); setSidebarOpen(false); }}
           >
             <Upload size={20} className="nav-icon" />
-            Upload Documents
+            {t('dashboard.uploadTabName')}
           </button>
           <button
             className={`nav-item ${activeTab === 'timeline' ? 'active' : ''}`}
@@ -673,7 +690,7 @@ export default function Dashboard() {
             disabled={timeline.length === 0}
           >
             <Clock size={20} className="nav-icon" />
-            Patient Timeline
+            {t('dashboard.timelineTabName')}
             {timeline.length > 0 && (
               <span className="nav-badge" style={{ background: 'var(--color-info)' }}>
                 {timeline.length}
@@ -686,7 +703,7 @@ export default function Dashboard() {
             disabled={extractedData.length === 0}
           >
             <AlertTriangle size={20} className="nav-icon" />
-            Drug Interactions
+            {t('dashboard.alertsTabName')}
             {alertCount > 0 && (
               <span className="nav-badge">{alertCount}</span>
             )}
@@ -697,7 +714,7 @@ export default function Dashboard() {
             disabled={trends.length === 0}
           >
             <TrendingUp size={20} className="nav-icon" />
-            Lab Trends
+            {t('dashboard.trendsTabName')}
           </button>
           <button
             className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}
@@ -705,7 +722,7 @@ export default function Dashboard() {
             disabled={extractedData.length === 0}
           >
             <MessageCircle size={20} className="nav-icon" />
-            Ask AI
+            {t('dashboard.chatTabName')}
           </button>
           <button
             className="nav-item"
@@ -717,7 +734,6 @@ export default function Dashboard() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ apiKey: 'reset' }),
                 });
-                // Reset all client state
                 setApiKeySet(false);
                 setApiKey('');
                 setDocuments([]);
@@ -739,7 +755,7 @@ export default function Dashboard() {
             }}
           >
             <ShieldAlert size={20} className="nav-icon" style={{ color: 'var(--color-danger)' }} />
-            Reset API / Exit Demo
+            {t('sidebar.resetKey')}
           </button>
         </nav>
 
@@ -762,12 +778,12 @@ export default function Dashboard() {
             </div>
             {patient.age && (
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                Age: {patient.age} {patient.gender ? `• ${patient.gender}` : ''}
+                {t('patient.age')}: {patient.age} {patient.gender ? `• ${patient.gender}` : ''}
               </p>
             )}
             {patient.bloodGroup && (
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                Blood Group: {patient.bloodGroup}
+                {t('patient.bloodGroup')}: {patient.bloodGroup}
               </p>
             )}
           </div>
@@ -777,12 +793,34 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="main-content">
         {/* Medical Disclaimer Banner */}
-        <div className="disclaimer-banner">
-          <ShieldAlert size={20} className="disclaimer-icon" />
-          <p>
-            <strong>Not medical advice.</strong> සුව நலம் AI is an informational tool only. 
-            Always consult your doctor or pharmacist before making health decisions.
-          </p>
+        <div className="disclaimer-banner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <ShieldAlert size={20} className="disclaimer-icon" />
+            <p>
+              <strong>{t('disclaimer.title')}:</strong> {t('disclaimer.warning')}
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowLanguageModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'rgba(255, 255, 255, 0.08)',
+              color: 'var(--text-primary)',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Globe size={14} />
+            {language === 'en' ? 'English' : language === 'si' ? 'සිංහල' : 'தமிழ்'}
+          </button>
         </div>
 
         {/* Processing Overlay */}
@@ -791,7 +829,7 @@ export default function Dashboard() {
             <div className="processing-overlay">
               <div className="spinner spinner-lg" />
               <h3>{processingStep}</h3>
-              <p>This may take a moment depending on the number and size of your documents.</p>
+              <p>{t('common.loading')}</p>
             </div>
           </div>
         )}
@@ -800,11 +838,8 @@ export default function Dashboard() {
         {activeTab === 'upload' && !isProcessing && (
           <>
             <div className="page-header">
-              <h2>Upload Medical Documents</h2>
-              <p>
-                Drag and drop your lab reports, prescriptions, discharge summaries, or
-                doctor&apos;s notes. We support PDF and image formats.
-              </p>
+              <h2>{t('upload.title')}</h2>
+              <p>{t('dashboard.subtitle')}</p>
             </div>
 
             <div className="glass-card" style={{ marginBottom: 'var(--space-lg)' }}>
@@ -814,12 +849,8 @@ export default function Dashboard() {
               >
                 <input {...dropzone.getInputProps()} />
                 <FileUp size={64} className="upload-icon" />
-                <h3>
-                  {dropzone.isDragActive
-                    ? 'Drop your files here...'
-                    : 'Drag & drop medical documents here'}
-                </h3>
-                <p>or click to browse your files</p>
+                <h3>{t('upload.dragDropHint')}</h3>
+                <p>{t('upload.supportedFormats')}</p>
                 <div className="upload-formats">
                   <span className="format-badge">PDF</span>
                   <span className="format-badge">PNG</span>
@@ -835,7 +866,7 @@ export default function Dashboard() {
                 style={{ width: '100%', maxWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
                 <Sparkles size={16} style={{ color: 'var(--accent-primary)' }} />
-                Load Sample Hackathon Patient Data
+                {t('upload.demoButton')}
               </button>
             </div>
 
@@ -845,7 +876,7 @@ export default function Dashboard() {
                 <div className="glass-card-header">
                   <h3>
                     <FileText size={20} />
-                    Uploaded Documents ({documents.length})
+                    {t('stats.documentsUploaded')} ({documents.length})
                   </h3>
                   <button
                     className="btn btn-primary"
@@ -853,7 +884,7 @@ export default function Dashboard() {
                     disabled={isProcessing || documents.length === 0}
                   >
                     <Sparkles size={18} />
-                    Analyze with AI
+                    {t('upload.processButton')}
                   </button>
                 </div>
 
@@ -877,25 +908,25 @@ export default function Dashboard() {
                         {doc.status === 'uploading' && (
                           <>
                             <CheckCircle2 size={14} />
-                            Ready
+                            {t('common.confirm')}
                           </>
                         )}
                         {doc.status === 'processing' && (
                           <>
                             <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                            Processing
+                            {t('upload.processing')}
                           </>
                         )}
                         {doc.status === 'complete' && (
                           <>
                             <CheckCircle2 size={14} />
-                            Complete
+                            {t('upload.complete')}
                           </>
                         )}
                         {doc.status === 'error' && (
                           <>
                             <XCircle size={14} />
-                            Error
+                            {t('upload.error')}
                           </>
                         )}
                       </div>
@@ -916,11 +947,8 @@ export default function Dashboard() {
               <div className="glass-card">
                 <div className="empty-state">
                   <FileText size={80} className="empty-state-icon" />
-                  <h3>No documents uploaded yet</h3>
-                  <p>
-                    Upload your medical documents to get started. Our AI will extract
-                    structured data, check for drug interactions, and analyze lab trends.
-                  </p>
+                  <h3>{t('upload.noFiles')}</h3>
+                  <p>{t('upload.dragDropHint')}</p>
                 </div>
               </div>
             )}
@@ -931,11 +959,8 @@ export default function Dashboard() {
         {activeTab === 'timeline' && !isProcessing && (
           <>
             <div className="page-header">
-              <h2>Patient Timeline</h2>
-              <p>
-                Chronological view of all medical events extracted from your
-                documents.
-              </p>
+              <h2>{t('timeline.title')}</h2>
+              <p>{t('dashboard.subtitle')}</p>
             </div>
 
             {/* Stats */}
@@ -946,7 +971,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="stat-value">{timeline.length}</div>
-                  <div className="stat-label">Documents</div>
+                  <div className="stat-label">{t('stats.documentsUploaded')}</div>
                 </div>
               </div>
               <div className="stat-card">
@@ -955,7 +980,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="stat-value">{totalMedications}</div>
-                  <div className="stat-label">Medications</div>
+                  <div className="stat-label">{t('patient.medications')}</div>
                 </div>
               </div>
               <div className="stat-card">
@@ -964,7 +989,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="stat-value">{alertCount}</div>
-                  <div className="stat-label">Alerts</div>
+                  <div className="stat-label">{t('stats.alertsFound')}</div>
                 </div>
               </div>
               <div className="stat-card">
@@ -973,7 +998,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="stat-value">{totalLabResults}</div>
-                  <div className="stat-label">Lab Results</div>
+                  <div className="stat-label">{t('timeline.labResults')}</div>
                 </div>
               </div>
             </div>
@@ -989,8 +1014,7 @@ export default function Dashboard() {
               <div className="glass-card">
                 <div className="empty-state">
                   <Clock size={80} className="empty-state-icon" />
-                  <h3>No timeline data yet</h3>
-                  <p>Upload and analyze documents to see your patient timeline.</p>
+                  <h3>{t('timeline.empty')}</h3>
                 </div>
               </div>
             )}
@@ -1001,11 +1025,8 @@ export default function Dashboard() {
         {activeTab === 'alerts' && !isProcessing && (
           <>
             <div className="page-header">
-              <h2>Drug Interaction Analysis</h2>
-              <p>
-                Cross-check results across all prescriptions from different visits
-                and providers.
-              </p>
+              <h2>{t('alerts.title')}</h2>
+              <p>{t('alerts.checkInteractions')}</p>
             </div>
 
             {/* Risk Banner */}
@@ -1022,8 +1043,8 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h3>
-                    Overall Risk Level:{' '}
-                    {overallRiskLevel.charAt(0).toUpperCase() + overallRiskLevel.slice(1)}
+                    {t('alerts.overallRisk')}:{' '}
+                    {t(`alerts.${overallRiskLevel}`)}
                   </h3>
                   <p>{crossCheckSummary}</p>
                 </div>
@@ -1041,7 +1062,7 @@ export default function Dashboard() {
                   >
                     <div className="alert-header">
                       <span className={`alert-severity ${alert.severity}`}>
-                        {alert.severity}
+                        {t(`alerts.${alert.severity}`)}
                       </span>
                       <span className="alert-type">
                         {alert.type.replace(/_/g, ' ')}
@@ -1065,7 +1086,7 @@ export default function Dashboard() {
                         className="alert-recommendation-icon"
                       />
                       <p>
-                        <strong>Recommendation:</strong> {alert.recommendation}
+                        <strong>{t('alerts.recommendation')}:</strong> {alert.recommendation}
                       </p>
                     </div>
                   </div>
@@ -1074,12 +1095,8 @@ export default function Dashboard() {
                 <div className="glass-card">
                   <div className="empty-state">
                     <Shield size={80} className="empty-state-icon" />
-                    <h3>No alerts found</h3>
-                    <p>
-                      {extractedData.length > 0
-                        ? 'No drug interactions or conflicts were detected. Always verify with your pharmacist.'
-                        : 'Upload and analyze documents to check for drug interactions.'}
-                    </p>
+                    <h3>{t('alerts.noAlerts')}</h3>
+                    <p>{t('alerts.consult')}</p>
                   </div>
                 </div>
               )}
@@ -1091,18 +1108,15 @@ export default function Dashboard() {
         {activeTab === 'trends' && !isProcessing && (
           <>
             <div className="page-header">
-              <h2>Lab Result Trends</h2>
-              <p>
-                Track how your lab values have changed over time across multiple
-                visits.
-              </p>
+              <h2>{t('trends.title')}</h2>
+              <p>{t('dashboard.subtitle')}</p>
             </div>
 
             {trendsSummary && (
               <div className="summary-card">
                 <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Activity size={18} style={{ color: 'var(--accent-primary)' }} />
-                  Overall Summary
+                  {t('trends.summary')}
                 </h3>
                 <p>{trendsSummary}</p>
               </div>
@@ -1118,11 +1132,7 @@ export default function Dashboard() {
               <div className="glass-card">
                 <div className="empty-state">
                   <TrendingUp size={80} className="empty-state-icon" />
-                  <h3>No trend data available</h3>
-                  <p>
-                    Upload lab reports from multiple visits to see how your results
-                    change over time.
-                  </p>
+                  <h3>{t('trends.noTrends')}</h3>
                 </div>
               </div>
             )}
@@ -1133,11 +1143,8 @@ export default function Dashboard() {
         {activeTab === 'chat' && !isProcessing && (
           <>
             <div className="page-header">
-              <h2>Ask AI About Your Records</h2>
-              <p>
-                Ask follow-up questions that reason across all your medical
-                documents.
-              </p>
+              <h2>{t('chat.title')}</h2>
+              <p>{t('chat.disclaimer')}</p>
             </div>
 
             <div className="chat-container">
@@ -1145,11 +1152,8 @@ export default function Dashboard() {
                 {chatMessages.length === 0 && (
                   <div className="empty-state" style={{ padding: 'var(--space-2xl)' }}>
                     <Bot size={64} className="empty-state-icon" />
-                    <h3>Start a conversation</h3>
-                    <p>
-                      Ask questions about your medical documents. I can reason across
-                      all your uploaded records.
-                    </p>
+                    <h3>{t('chat.noMessages')}</h3>
+                    <p>{t('chat.placeholder')}</p>
                   </div>
                 )}
 
@@ -1182,7 +1186,7 @@ export default function Dashboard() {
                       {msg.shouldConsultDoctor && (
                         <div className="consult-doctor-badge">
                           <Stethoscope size={14} />
-                          Please consult your doctor about this
+                          {t('chat.consultDoctorNotice')}
                         </div>
                       )}
                     </div>
@@ -1196,7 +1200,7 @@ export default function Dashboard() {
                     </div>
                     <div className="chat-bubble" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div className="spinner" />
-                      Analyzing your documents...
+                      {t('chat.loading')}
                     </div>
                   </div>
                 )}
@@ -1222,7 +1226,7 @@ export default function Dashboard() {
                 <div className="chat-input-row">
                   <input
                     className="chat-input"
-                    placeholder="Ask about your medical records..."
+                    placeholder={t('chat.placeholder')}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
@@ -1249,6 +1253,7 @@ export default function Dashboard() {
 // Timeline Event Card Sub-Component
 // ============================================================
 function TimelineEventCard({ event }: { event: TimelineEvent }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -1268,30 +1273,30 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
           {event.medications.length > 0 && (
             <span className="timeline-tag">
               <Pill size={12} />
-              {event.medications.length} medication{event.medications.length > 1 ? 's' : ''}
+              {event.medications.length} {t('timeline.medications')}
             </span>
           )}
           {event.labResults.length > 0 && (
             <span className="timeline-tag">
               <FlaskConical size={12} />
-              {event.labResults.length} lab result{event.labResults.length > 1 ? 's' : ''}
+              {event.labResults.length} {t('timeline.labResults')}
             </span>
           )}
           {event.diagnoses.length > 0 && (
             <span className="timeline-tag">
               <Activity size={12} />
-              {event.diagnoses.length} diagnos{event.diagnoses.length > 1 ? 'es' : 'is'}
+              {event.diagnoses.length} {t('patient.knownConditions')}
             </span>
           )}
           {event.allergies.length > 0 && (
             <span className="timeline-tag">
               <AlertCircle size={12} />
-              {event.allergies.length} allerg{event.allergies.length > 1 ? 'ies' : 'y'}
+              {event.allergies.length} {t('patient.allergies')}
             </span>
           )}
           <span className="timeline-tag" style={{ marginLeft: 'auto' }}>
             {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            {expanded ? 'Collapse' : 'Details'}
+            {expanded ? t('common.close') : t('timeline.viewDetails')}
           </span>
         </div>
 
@@ -1299,7 +1304,7 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
           <div className="timeline-expanded">
             {event.medications.length > 0 && (
               <div className="timeline-section">
-                <h4>Medications</h4>
+                <h4>{t('timeline.medications')}</h4>
                 <div className="timeline-med-list">
                   {event.medications.map((med, i) => (
                     <div key={i} className="timeline-med-item">
@@ -1318,7 +1323,7 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
 
             {event.labResults.length > 0 && (
               <div className="timeline-section">
-                <h4>Lab Results</h4>
+                <h4>{t('timeline.labResults')}</h4>
                 <div className="timeline-med-list">
                   {event.labResults.map((lab, i) => (
                     <div key={i} className="timeline-lab-item">
@@ -1339,7 +1344,7 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
 
             {event.diagnoses.length > 0 && (
               <div className="timeline-section">
-                <h4>Diagnoses</h4>
+                <h4>{t('patient.knownConditions')}</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {event.diagnoses.map((d, i) => (
                     <span key={i} className="format-badge" style={{ fontSize: '0.8rem' }}>
@@ -1352,7 +1357,7 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
 
             {event.allergies.length > 0 && (
               <div className="timeline-section">
-                <h4>Allergies</h4>
+                <h4>{t('patient.allergies')}</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {event.allergies.map((a, i) => (
                     <span
@@ -1382,6 +1387,8 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
 // Lab Trend Chart Sub-Component
 // ============================================================
 function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number }) {
+  const { t } = useI18n();
+
   const TrendIcon =
     trend.trendDirection === 'increasing'
       ? ArrowUpRight
@@ -1397,15 +1404,15 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
       {
         label: trend.testName,
         data: trend.dataPoints.map((dp) => dp.value),
-        borderColor: trend.isWorrying ? '#ef4444' : '#06b6d4',
+        borderColor: trend.isWorrying ? 'var(--color-danger)' : 'var(--accent-primary)',
         backgroundColor: trend.isWorrying
           ? 'rgba(239, 68, 68, 0.1)'
-          : 'rgba(6, 182, 212, 0.1)',
+          : 'rgba(37, 99, 235, 0.1)',
         borderWidth: 2,
         pointBackgroundColor: trend.dataPoints.map((dp) => {
           const val = dp.value;
-          if (val < trend.normalRangeMin || val > trend.normalRangeMax) return '#ef4444';
-          return '#22c55e';
+          if (val < trend.normalRangeMin || val > trend.normalRangeMax) return 'var(--color-danger)';
+          return 'var(--color-success)';
         }),
         pointBorderColor: 'transparent',
         pointRadius: 6,
@@ -1422,10 +1429,10 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1a2236',
-        titleColor: '#f1f5f9',
-        bodyColor: '#94a3b8',
-        borderColor: 'rgba(148, 163, 184, 0.2)',
+        backgroundColor: 'var(--bg-card-hover)',
+        titleColor: 'var(--text-primary)',
+        bodyColor: 'var(--text-secondary)',
+        borderColor: 'var(--border-color-hover)',
         borderWidth: 1,
         padding: 12,
         displayColors: false,
@@ -1438,12 +1445,12 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
     },
     scales: {
       x: {
-        grid: { color: 'rgba(148, 163, 184, 0.06)' },
-        ticks: { color: '#64748b', font: { size: 11 } },
+        grid: { color: 'rgba(148, 163, 184, 0.18)' },
+        ticks: { color: 'var(--text-tertiary)', font: { size: 11 } },
       },
       y: {
-        grid: { color: 'rgba(148, 163, 184, 0.06)' },
-        ticks: { color: '#64748b', font: { size: 11 } },
+        grid: { color: 'rgba(148, 163, 184, 0.18)' },
+        ticks: { color: 'var(--text-tertiary)', font: { size: 11 } },
         suggestedMin: Math.min(trend.normalRangeMin * 0.8, ...trend.dataPoints.map((d) => d.value)),
         suggestedMax: Math.max(trend.normalRangeMax * 1.2, ...trend.dataPoints.map((d) => d.value)),
       },
@@ -1458,7 +1465,7 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
         </span>
         <span className={`trend-direction ${trend.trendDirection}`}>
           <TrendIcon size={14} />
-          {trend.trendDirection}
+          {t(`trends.${trend.trendDirection}`)}
         </span>
       </div>
 
@@ -1470,13 +1477,13 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
         {trend.isWorrying && (
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-warning)', fontWeight: 600, fontSize: '0.8rem', marginBottom: '6px' }}>
             <AlertTriangle size={14} />
-            Concerning Trend Detected
+            {t('alerts.important')}
           </span>
         )}
         <p style={{ margin: 0 }}>{trend.explanation}</p>
         <p style={{ margin: '8px 0 0', fontSize: '0.8rem', color: 'var(--color-warning)' }}>
           <Stethoscope size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-          Discuss this trend with your healthcare provider.
+          {t('alerts.consult')}
         </p>
       </div>
 
