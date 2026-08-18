@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { answerQuestion } from '@/lib/openai';
 import type { ExtractedData, ChatMessage } from '@/types/medical';
 import { randomUUID } from 'crypto';
@@ -72,3 +72,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

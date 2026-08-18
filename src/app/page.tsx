@@ -75,6 +75,8 @@ import {
 import { useI18n, Language } from '@/lib/i18n';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { DisclaimerScreen } from '@/components/DisclaimerScreen';
+import { FindDoctorPanel } from '@/components/FindDoctorPanel';
+import { inferSpecialty } from '@/lib/specialtyMap';
 
 // Register Chart.js components
 ChartJS.register(
@@ -93,6 +95,14 @@ type TabType = 'upload' | 'timeline' | 'alerts' | 'trends' | 'chat';
 // ============================================================
 // Main Dashboard Component
 // ============================================================
+const SEVERITY_RANK: Record<string, number> = {
+  critical: 4,
+  major: 3,
+  moderate: 2,
+  minor: 1,
+  info: 0,
+};
+
 export default function Dashboard() {
   const {
     t,
@@ -940,7 +950,7 @@ export default function Dashboard() {
             {/* Alert Cards */}
             <div className="alert-panel">
               {alerts.length > 0 ? (
-                alerts.map((alert, index) => (
+                [...alerts].sort((a, b) => (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0)).map((alert, index) => (
                   <div
                     key={alert.id}
                     className={`alert-card ${alert.severity}`}
@@ -975,6 +985,13 @@ export default function Dashboard() {
                         <strong>{t('alerts.recommendation')}:</strong> {alert.recommendation}
                       </p>
                     </div>
+
+                    {/* Local Doctor Recommendation Panel */}
+                    <FindDoctorPanel
+                      specialty={alert.suggestedSpecialty || inferSpecialty(alert.type, `${alert.title} ${alert.description}`)}
+                      urgencyHint={alert.urgencyHint || (alert.severity === 'critical' ? 'immediate' : 'this_week')}
+                      context={alert.title}
+                    />
                   </div>
                 ))
               ) : (

@@ -1,5 +1,5 @@
-// ============================================================
-// MediScan AI — Prompt Templates for Gemini AI
+﻿// ============================================================
+// MediScan AI â€” Prompt Templates for Gemini AI
 // ============================================================
 
 /**
@@ -10,7 +10,7 @@
 export const DOCUMENT_EXTRACTION_PROMPT = `You are a medical document analyzer. Extract ALL structured data from this medical document.
 
 IMPORTANT RULES:
-1. Extract EVERY piece of information — medications, lab results, dates, providers, diagnoses, allergies, procedures, vital signs
+1. Extract EVERY piece of information â€” medications, lab results, dates, providers, diagnoses, allergies, procedures, vital signs
 2. For medications: include exact dosage, frequency, route of administration, and duration if available
 3. For lab results: include the exact numeric value, unit, and normal reference range from the document
 4. Determine the document type: "lab_report", "prescription", "discharge_summary", or "doctor_notes"
@@ -68,7 +68,7 @@ Return ONLY a valid JSON object with this EXACT structure (no markdown, no code 
 }
 
 If a field has no data, use empty string for strings, empty array for arrays, or empty object for objects.
-Be thorough — missing data could affect drug interaction checks and patient safety.`;
+Be thorough â€” missing data could affect drug interaction checks and patient safety.`;
 
 
 /**
@@ -112,6 +112,8 @@ Return ONLY a valid JSON object (no markdown, no code blocks):
       "description": "Clear explanation of the issue",
       "mechanism": "How these drugs interact (if applicable)",
       "recommendation": "What the patient should discuss with their doctor",
+      "suggestedSpecialty": "The most relevant doctor type to consult: Cardiologist | Nephrologist | Endocrinologist | Allergist / Immunologist | Clinical Pharmacist | Hematologist | Gastroenterologist | Pulmonologist | Neurologist | General Practitioner",
+      "urgencyHint": "immediate | this_week | routine"
       "confidenceScore": 85
     }
   ],
@@ -119,10 +121,16 @@ Return ONLY a valid JSON object (no markdown, no code blocks):
   "summary": "Overall summary of findings in 2-3 sentences"
 }
 
+SPECIALTY DERIVATION RULES:
+- For drug-drug interactions: derive specialist from the drug classes (ACE inhibitor + K-sparing → Cardiologist/Nephrologist; anticoagulants → Hematologist; antidiabetics → Endocrinologist; hepatotoxic drugs → Gastroenterologist)
+- For allergy conflicts: Allergist / Immunologist (unless life-threatening → Emergency/immediate)
+- For duplicate prescriptions: General Practitioner (referring both prescribing doctors)
+- urgencyHint = "immediate" for critical severity; "this_week" for major/moderate; "routine" for minor
+
 CRITICAL RULES:
 - ALWAYS recommend consulting a doctor or pharmacist for ANY finding
-- NEVER state that a combination is "safe" — only that no interactions were IDENTIFIED
-- Be thorough — missing an interaction could be dangerous
+- NEVER state that a combination is "safe" â€” only that no interactions were IDENTIFIED
+- Be thorough â€” missing an interaction could be dangerous
 - When in doubt, flag it with a lower confidence score rather than ignoring it`;
 
 
@@ -179,7 +187,7 @@ IMPORTANT RULES:
 3. Provide a confidence score (0-100) for your answer
 4. Flag if your answer involves HIGH-RISK medical information
 5. ALWAYS recommend consulting a healthcare professional
-6. NEVER diagnose or prescribe — you are an information tool only
+6. NEVER diagnose or prescribe â€” you are an information tool only
 7. If you cannot find the answer in the documents, say so clearly
 8. Use plain, patient-friendly language
 
@@ -200,6 +208,10 @@ Return ONLY a valid JSON object (no markdown, no code blocks):
   "shouldConsultDoctor": true,
   "isHighRisk": false,
   "suggestedFollowUp": [
+  "...", "..."
+  ],
+  "suggestedSpecialty": "Most relevant doctor type if isHighRisk is true, e.g. Cardiologist, Nephrologist. Use null if not applicable.",
+  "urgencyHint": "immediate | this_week | routine | not_applicable"
     "Follow-up question 1 the patient might want to ask",
     "Follow-up question 2"
   ]
@@ -209,13 +221,14 @@ Return ONLY a valid JSON object (no markdown, no code blocks):
 /**
  * System instruction for the Gemini model
  */
-export const SYSTEM_INSTRUCTION = `You are සුව நலம் AI, a medical document analysis assistant. You help patients understand their medical records by extracting structured data, identifying potential drug interactions, tracking lab result trends, and answering questions.
+export const SYSTEM_INSTRUCTION = `You are à·ƒà·”à·€ à®¨à®²à®®à¯ AI, a medical document analysis assistant. You help patients understand their medical records by extracting structured data, identifying potential drug interactions, tracking lab result trends, and answering questions.
 
 CRITICAL SAFETY RULES:
 1. You are NOT a doctor. You do NOT diagnose, prescribe, or provide medical advice.
-2. You analyze documents and present information — the patient's doctor makes medical decisions.
+2. You analyze documents and present information â€” the patient's doctor makes medical decisions.
 3. ALWAYS recommend consulting a healthcare professional for any medical concerns.
 4. When uncertain, provide a lower confidence score and explicitly state your uncertainty.
 5. NEVER tell a patient to stop, start, or change any medication.
 6. Your analysis is for informational purposes only.
-7. Always respond with valid JSON as specified in the prompt — no markdown formatting.`;
+7. Always respond with valid JSON as specified in the prompt â€” no markdown formatting.`;
+

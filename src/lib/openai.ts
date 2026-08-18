@@ -1,5 +1,5 @@
-// ============================================================
-// MediScan AI — AI Client (Groq primary, OpenAI fallback)
+﻿// ============================================================
+// MediScan AI â€” AI Client (Groq primary, OpenAI fallback)
 // Uses OpenAI-compatible SDK with Groq's endpoint
 // ============================================================
 
@@ -22,7 +22,7 @@ import type {
 } from '@/types/medical';
 
 // ============================================================
-// Client Factory — Groq preferred (free), OpenAI as fallback
+// Client Factory â€” Groq preferred (free), OpenAI as fallback
 // ============================================================
 
 function getVisionClient(): { client: OpenAI; model: string } {
@@ -64,7 +64,7 @@ function getTextClient(): { client: OpenAI; model: string } {
         apiKey: groqKey,
         baseURL: 'https://api.groq.com/openai/v1',
       }),
-      model: 'llama-3.3-70b-versatile',
+      model: 'groq/compound-mini',
     };
   }
 
@@ -82,10 +82,10 @@ function getTextClient(): { client: OpenAI; model: string } {
 
 function getLanguageInstruction(language?: string): string {
   if (language === 'si') {
-    return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide ALL human-readable descriptions, explanations, summaries, notes, and recommendations strictly in Sinhala (සිංහල). Keep brand names, generic medication names, and lab test titles in their standard medical form if needed, but explain everything in natural, fluent Sinhala.';
+    return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide ALL human-readable descriptions, explanations, summaries, notes, and recommendations strictly in Sinhala (à·ƒà·’à¶‚à·„à¶½). Keep brand names, generic medication names, and lab test titles in their standard medical form if needed, but explain everything in natural, fluent Sinhala.';
   }
   if (language === 'ta') {
-    return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide ALL human-readable descriptions, explanations, summaries, notes, and recommendations strictly in Tamil (தமிழ்). Keep brand names, generic medication names, and lab test titles in their standard medical form if needed, but explain everything in natural, fluent Tamil.';
+    return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide ALL human-readable descriptions, explanations, summaries, notes, and recommendations strictly in Tamil (à®¤à®®à®¿à®´à¯). Keep brand names, generic medication names, and lab test titles in their standard medical form if needed, but explain everything in natural, fluent Tamil.';
   }
   return '\n\nCRITICAL LANGUAGE INSTRUCTION: Provide all human-readable text in clear, patient-friendly English.';
 }
@@ -96,7 +96,7 @@ export async function translateText(
 ): Promise<string> {
   if (!text || !text.trim() || targetLanguage === 'en') return text;
   const { client, model } = getTextClient();
-  const langName = targetLanguage === 'si' ? 'Sinhala (සිංහල)' : targetLanguage === 'ta' ? 'Tamil (தமிழ்)' : 'English';
+  const langName = targetLanguage === 'si' ? 'Sinhala (à·ƒà·’à¶‚à·„à¶½)' : targetLanguage === 'ta' ? 'Tamil (à®¤à®®à®¿à®´à¯)' : 'English';
   
   try {
     const response = await client.chat.completions.create({
@@ -155,7 +155,7 @@ function parseAIResponse<T>(text: string): T {
 }
 
 // ============================================================
-// Document Extraction (Vision — reads the actual image)
+// Document Extraction (Vision â€” reads the actual image)
 // ============================================================
 
 export async function extractDocumentData(
@@ -377,3 +377,4 @@ export async function answerQuestion(
     };
   }
 }
+

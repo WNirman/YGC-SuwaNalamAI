@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { crossCheckPrescriptions } from '@/lib/openai';
 import type { Medication, Alert } from '@/types/medical';
 import { randomUUID } from 'crypto';
@@ -54,6 +54,8 @@ export async function POST(request: NextRequest) {
           : 'allergy_warning',
       severity: interaction.severity,
       title: `${interaction.drug1} ↔ ${interaction.drug2}`,
+      suggestedSpecialty: interaction.suggestedSpecialty,
+      urgencyHint: interaction.urgencyHint,
       description: interaction.description,
       recommendation: interaction.recommendation,
       confidenceScore: interaction.confidenceScore,
@@ -76,3 +78,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

@@ -1,4 +1,6 @@
-export type AlertSeverity = 'critical' | 'major' | 'moderate' | 'minor' | 'info';
+﻿export type AlertSeverity = 'critical' | 'major' | 'moderate' | 'minor' | 'info';
+
+export type UrgencyHint = 'immediate' | 'this_week' | 'routine';
 
 export interface PatientInfo {
   name: string;
@@ -69,6 +71,8 @@ export interface DrugInteraction {
   recommendation: string;
   affectedDocuments: string[];
   confidenceScore: number;
+  suggestedSpecialty?: string;  // AI-derived specialist recommendation
+  urgencyHint?: UrgencyHint;    // AI-derived urgency level
 }
 
 export interface Alert {
@@ -81,6 +85,8 @@ export interface Alert {
   confidenceScore: number;
   relatedDocuments: string[];
   timestamp: string;
+  suggestedSpecialty?: string;  // AI-derived specialist recommendation
+  urgencyHint?: UrgencyHint;    // AI-derived urgency level
 }
 
 export interface DataPoint {
@@ -116,6 +122,8 @@ export interface ChatMessage {
   isHighRisk?: boolean;
   suggestedFollowUp?: string[];
   isThinking?: boolean;
+  suggestedSpecialty?: string;  // AI-derived specialist recommendation
+  urgencyHint?: UrgencyHint;    // AI-derived urgency level
 }
 
 export interface UploadedDocument {
@@ -131,4 +139,34 @@ export interface UploadedDocument {
 export interface SuggestedQuestion {
   text: string;
   category: string;
+}
+
+// ============================================================
+// Doctor Recommendation Types
+// ============================================================
+
+/** A single real doctor/clinic result from Google Maps or OpenStreetMap */
+export interface DoctorResult {
+  placeId: string;          // Google place_id or OSM node id
+  name: string;
+  inferredSpecialty: string;
+  address: string;
+  distanceKm: number;
+  phone?: string;
+  openingHours?: string;
+  rating?: number;
+  photoUrl?: string;          // Google Maps only (1-5 stars)
+  totalRatings?: number;    // Google Maps only
+  lat: number;
+  lon: number;
+  dataSource: 'google' | 'osm';
+}
+
+/** Response from /api/find-doctors */
+export interface FindDoctorsResponse {
+  results: DoctorResult[];
+  searchedNear: string;    // Geocoded display name of the city
+  lat: number;
+  lon: number;
+  dataSource: 'google' | 'osm';
 }
