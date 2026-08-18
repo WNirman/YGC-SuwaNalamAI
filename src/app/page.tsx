@@ -34,6 +34,7 @@ import {
   Sparkles,
   XCircle,
   Globe,
+  SunMoon,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -74,6 +75,7 @@ import {
 } from '@/lib/mockData';
 import { useI18n, Language } from '@/lib/i18n';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { DisclaimerScreen } from '@/components/DisclaimerScreen';
 import { FindDoctorPanel } from '@/components/FindDoctorPanel';
 import { inferSpecialty } from '@/lib/specialtyMap';
@@ -611,6 +613,26 @@ export default function Dashboard() {
           >
             {language === 'en' ? '🇬🇧 EN' : language === 'si' ? '🇱🇰 SI' : '🇱🇰 TA'}
           </button>
+        </div>
+
+        {/* Theme Switcher Bar in Sidebar */}
+        <div
+          style={{
+            margin: '0 0 16px 0',
+            padding: '10px 14px',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            <SunMoon size={16} style={{ color: 'var(--accent-primary)' }} />
+            <span>{t('theme.appearance')}</span>
+          </div>
+          <ThemeToggle size={34} />
         </div>
 
         <nav className="sidebar-nav">

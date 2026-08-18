@@ -205,5 +205,8 @@
     "orEnterPlace": "or enter a city / area",
     "geoNotSupported": "Geolocation is not supported by your browser.",
     "geoDenied": "Could not access GPS. Please type your city/area name below."
+  },
+  "theme": {
+    "appearance": "Appearance"
   }
 }
