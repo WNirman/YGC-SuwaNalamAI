@@ -144,7 +144,6 @@ const getCircleClipPosition = (position: AnimationStart) => {
 /** Selector-only wrapper shared by the clip-path reveals. */
 const clipRevealCSS = (
   suffix: string,
-  duration: string,
   blur: boolean,
   frames: {
     darkFrom: string;
@@ -154,8 +153,8 @@ const clipRevealCSS = (
   },
 ) => `
     ::view-transition-group(root) {
-      animation-duration: ${duration};
-      animation-timing-function: var(--expo-out);
+      animation-duration: var(--theme-wave-duration);
+      animation-timing-function: var(--theme-wave-ease);
     }
 
     ::view-transition-new(root) {
@@ -205,7 +204,7 @@ export const createOriginAnimation = (
 
   return {
     name: `circle-${suffix}`,
-    css: clipRevealCSS(suffix, '0.7s', blur, {
+    css: clipRevealCSS(suffix, blur, {
       darkFrom: `circle(0px at ${at})`,
       darkTo: `circle(${radius}px at ${at})`,
       lightFrom: `circle(0px at ${at})`,
@@ -226,21 +225,18 @@ export const createAnimation = (
   const suffix = `${start}${blur ? '-blur' : ''}`;
   const name = `${variant}-${suffix}`;
 
-  const clipReveal = (
-    duration: string,
-    frames: {
-      darkFrom: string;
-      darkTo: string;
-      lightFrom: string;
-      lightTo: string;
-    },
-  ) => clipRevealCSS(suffix, duration, blur, frames);
+  const clipReveal = (frames: {
+    darkFrom: string;
+    darkTo: string;
+    lightFrom: string;
+    lightTo: string;
+  }) => clipRevealCSS(suffix, blur, frames);
 
   if (variant === 'rectangle') {
     const { from, to } = getRectangleClipPath(start);
     return {
       name,
-      css: clipReveal('0.7s', {
+      css: clipReveal({
         darkFrom: from,
         darkTo: to,
         lightFrom: from,
@@ -250,7 +246,7 @@ export const createAnimation = (
   }
 
   if (variant === 'polygon') {
-    return { name, css: clipReveal('0.7s', getPolygonClipPaths(start)) };
+    return { name, css: clipReveal(getPolygonClipPaths(start)) };
   }
 
   if (variant === 'circle') {
@@ -259,7 +255,7 @@ export const createAnimation = (
     const to = start === 'center' ? `circle(100% at ${at})` : `circle(150% at ${at})`;
     return {
       name,
-      css: clipReveal(start === 'center' ? '0.7s' : '1s', {
+      css: clipReveal({
         darkFrom: from,
         darkTo: to,
         lightFrom: from,
@@ -277,19 +273,19 @@ export const createAnimation = (
     name,
     css: `
       ::view-transition-group(root) {
-        animation-timing-function: var(--expo-out);
+        animation-timing-function: var(--theme-wave-ease);
       }
 
       ::view-transition-new(root) {
         mask: url('${svg}') ${maskPosition} / 0 no-repeat;
         mask-origin: content-box;
-        animation: scale-${suffix} 1s;
+        animation: scale-${suffix} var(--theme-wave-duration);
         transform-origin: ${transformOrigin};
       }
 
       ::view-transition-old(root),
       ${DARK}::view-transition-old(root) {
-        animation: scale-${suffix} 1s;
+        animation: scale-${suffix} var(--theme-wave-duration);
         transform-origin: ${transformOrigin};
         z-index: -1;
       }

@@ -199,9 +199,9 @@
     "phone": "Phone",
     "hours": "Opening Hours",
     "address": "Address",
-    "useLocation": "📍 Use My Current Location (Near Me)",
+    "useLocation": "Use My Current Location (Near Me)",
     "locating": "Detecting GPS location...",
-    "currentLocationDetected": "📍 Current GPS Location",
+    "currentLocationDetected": "Current GPS Location",
     "orEnterPlace": "or enter a city / area",
     "geoNotSupported": "Geolocation is not supported by your browser.",
     "geoDenied": "Could not access GPS. Please type your city/area name below."
