@@ -42,12 +42,23 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = language;
+      document.documentElement.setAttribute('data-lang', language);
+    }
+  }, [language]);
+
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     setHasChosenLanguageState(true);
     setShowLanguageModal(false);
     localStorage.setItem('mediscan-language', lang);
     localStorage.setItem('mediscan-language-chosen', 'true');
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+      document.documentElement.setAttribute('data-lang', lang);
+    }
   };
 
   const setHasChosenLanguage = (chosen: boolean) => {

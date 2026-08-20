@@ -26,9 +26,9 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(15,15,15,0.88)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backgroundColor: 'rgba(8,10,15,0.65)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         zIndex: 2000,
         animation: 'fadeIn 0.3s ease-out',
         padding: '20px',
@@ -36,14 +36,14 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
     >
       <div
         style={{
-          background: 'linear-gradient(145deg, rgba(34,40,50,0.96), rgba(22,26,33,0.98))',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: '0',
+          background: 'var(--gradient-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '24px',
           padding: '40px 32px',
           maxWidth: '520px',
           width: '100%',
           textAlign: 'center',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(92,157,255,0.18)',
+          boxShadow: 'var(--shadow-lg)',
           position: 'relative',
         }}
       >
@@ -54,14 +54,14 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
             justifyContent: 'center',
             width: '80px',
             height: '80px',
-            borderRadius: '0',
-            background: 'radial-gradient(circle, rgba(92,157,255,0.28) 0%, rgba(92,157,255,0.06) 70%)',
-            border: '1px solid rgba(92,157,255,0.38)',
+            borderRadius: '50%',
+            background: 'var(--gradient-accent)',
+            border: '1px solid var(--border-accent)',
             marginBottom: '24px',
-            boxShadow: '0 0 20px rgba(92,157,255,0.25)',
+            boxShadow: 'var(--shadow-glow)',
           }}
         >
-          <Globe size={40} style={{ color: '#5c9dff' }} />
+          <Globe size={40} style={{ color: 'var(--accent-primary)' }} />
         </div>
 
         <h1
@@ -69,7 +69,7 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
             fontSize: '1.85rem',
             fontWeight: 800,
             marginBottom: '8px',
-            color: '#fafafa',
+            color: 'var(--accent-secondary)',
             letterSpacing: '-0.02em',
           }}
         >
@@ -78,7 +78,7 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
 
         <p
           style={{
-            color: '#a1a1a1',
+            color: 'var(--text-secondary)',
             fontSize: '0.98rem',
             marginBottom: '32px',
             lineHeight: 1.6,
@@ -101,29 +101,29 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
               padding: '18px 24px',
               fontSize: '1.1rem',
               fontWeight: 600,
-              borderRadius: '0',
-              border: language === 'en' ? '2px solid #5c9dff' : '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '16px',
+              border: language === 'en' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
               background:
                 language === 'en'
-                  ? 'linear-gradient(135deg, rgba(92,157,255,0.26), rgba(61,127,224,0.14))'
-                  : 'rgba(255,255,255,0.03)',
-              color: language === 'en' ? '#8fbcff' : '#e7e7e7',
+                  ? 'var(--accent-primary-dim)'
+                  : 'var(--bg-primary)',
+              color: language === 'en' ? 'var(--accent-primary)' : 'var(--text-primary)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               transition: 'all 0.2s ease',
-              boxShadow: language === 'en' ? '0 4px 15px rgba(92,157,255,0.24)' : 'none',
+              boxShadow: language === 'en' ? 'var(--shadow-sm)' : 'none',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', border: '1px solid rgba(255,255,255,0.25)', padding: '4px 8px', minWidth: '38px', textAlign: 'center' }}>EN</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', border: '1px solid var(--border-color)', padding: '4px 8px', minWidth: '38px', textAlign: 'center', borderRadius: '8px' }}>EN</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>English</div>
-                <div style={{ fontSize: '0.8rem', color: '#727272' }}>Default Language</div>
+                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: language === 'en' ? 'var(--accent-primary)' : 'var(--text-primary)' }}>English</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Default Language</div>
               </div>
             </div>
-            {language === 'en' && <Check size={22} style={{ color: '#5c9dff' }} />}
+            {language === 'en' && <Check size={22} style={{ color: 'var(--accent-primary)' }} />}
           </button>
 
           {/* Sinhala Option */}
@@ -133,29 +133,29 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
               padding: '18px 24px',
               fontSize: '1.1rem',
               fontWeight: 600,
-              borderRadius: '0',
-              border: language === 'si' ? '2px solid #5c9dff' : '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '16px',
+              border: language === 'si' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
               background:
                 language === 'si'
-                  ? 'linear-gradient(135deg, rgba(92,157,255,0.26), rgba(61,127,224,0.14))'
-                  : 'rgba(255,255,255,0.03)',
-              color: language === 'si' ? '#8fbcff' : '#e7e7e7',
+                  ? 'var(--accent-primary-dim)'
+                  : 'var(--bg-primary)',
+              color: language === 'si' ? 'var(--accent-primary)' : 'var(--text-primary)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               transition: 'all 0.2s ease',
-              boxShadow: language === 'si' ? '0 4px 15px rgba(92,157,255,0.24)' : 'none',
+              boxShadow: language === 'si' ? 'var(--shadow-sm)' : 'none',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', border: '1px solid rgba(255,255,255,0.25)', padding: '4px 8px', minWidth: '38px', textAlign: 'center' }}>SI</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', border: '1px solid var(--border-color)', padding: '4px 8px', minWidth: '38px', textAlign: 'center', borderRadius: '8px' }}>SI</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>සිංහල</div>
-                <div style={{ fontSize: '0.8rem', color: '#727272' }}>Sinhala</div>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', color: language === 'si' ? 'var(--accent-primary)' : 'var(--text-primary)' }}>සිංහල</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Sinhala</div>
               </div>
             </div>
-            {language === 'si' && <Check size={22} style={{ color: '#5c9dff' }} />}
+            {language === 'si' && <Check size={22} style={{ color: 'var(--accent-primary)' }} />}
           </button>
 
           {/* Tamil Option */}
@@ -165,29 +165,29 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
               padding: '18px 24px',
               fontSize: '1.1rem',
               fontWeight: 600,
-              borderRadius: '0',
-              border: language === 'ta' ? '2px solid #5c9dff' : '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '16px',
+              border: language === 'ta' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
               background:
                 language === 'ta'
-                  ? 'linear-gradient(135deg, rgba(92,157,255,0.26), rgba(61,127,224,0.14))'
-                  : 'rgba(255,255,255,0.03)',
-              color: language === 'ta' ? '#8fbcff' : '#e7e7e7',
+                  ? 'var(--accent-primary-dim)'
+                  : 'var(--bg-primary)',
+              color: language === 'ta' ? 'var(--accent-primary)' : 'var(--text-primary)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               transition: 'all 0.2s ease',
-              boxShadow: language === 'ta' ? '0 4px 15px rgba(92,157,255,0.24)' : 'none',
+              boxShadow: language === 'ta' ? 'var(--shadow-sm)' : 'none',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', border: '1px solid rgba(255,255,255,0.25)', padding: '4px 8px', minWidth: '38px', textAlign: 'center' }}>TA</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', border: '1px solid var(--border-color)', padding: '4px 8px', minWidth: '38px', textAlign: 'center', borderRadius: '8px' }}>TA</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>தமிழ்</div>
-                <div style={{ fontSize: '0.8rem', color: '#727272' }}>Tamil</div>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', color: language === 'ta' ? 'var(--accent-primary)' : 'var(--text-primary)' }}>தமிழ்</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Tamil</div>
               </div>
             </div>
-            {language === 'ta' && <Check size={22} style={{ color: '#5c9dff' }} />}
+            {language === 'ta' && <Check size={22} style={{ color: 'var(--accent-primary)' }} />}
           </button>
         </div>
 
@@ -198,7 +198,7 @@ export function LanguageSelector({ onComplete, allowClose = false }: LanguageSel
               marginTop: '20px',
               background: 'transparent',
               border: 'none',
-              color: '#727272',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: '0.9rem',
               textDecoration: 'underline',

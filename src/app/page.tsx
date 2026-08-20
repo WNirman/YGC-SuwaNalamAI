@@ -135,10 +135,28 @@ export default function Dashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+  const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
+  const mobileLangDropdownRef = useRef<HTMLDivElement>(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [apiKeySet, setApiKeySet] = useState(true);
   const [apiKeyError, setApiKeyError] = useState('');
+
+  // Close language dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+      if (mobileLangDropdownRef.current && !mobileLangDropdownRef.current.contains(e.target as Node)) {
+        setMobileLangDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Check for API key on mount
   useEffect(() => {
@@ -552,10 +570,6 @@ export default function Dashboard() {
     return <LanguageSelector onComplete={() => setHasChosenLanguage(true)} />;
   }
 
-  // Optional manual modal switch
-  if (showLanguageModal) {
-    return <LanguageSelector allowClose onComplete={() => setShowLanguageModal(false)} />;
-  }
 
 
   // ============================================================
@@ -581,7 +595,7 @@ export default function Dashboard() {
       id: 'timeline',
       Icon: Clock,
       label: t('dashboard.timelineTabName'),
-      disabled: timeline.length === 0,
+      disabled: false,
       badge: timeline.length > 0 ? timeline.length : null,
       badgeColor: 'var(--color-info)',
     },
@@ -589,21 +603,21 @@ export default function Dashboard() {
       id: 'alerts',
       Icon: AlertTriangle,
       label: t('dashboard.alertsTabName'),
-      disabled: extractedData.length === 0,
+      disabled: false,
       badge: alertCount > 0 ? alertCount : null,
     },
     {
       id: 'trends',
       Icon: TrendingUp,
       label: t('dashboard.trendsTabName'),
-      disabled: trends.length === 0,
+      disabled: false,
       badge: null,
     },
     {
       id: 'chat',
       Icon: MessageCircle,
       label: t('dashboard.chatTabName'),
-      disabled: extractedData.length === 0,
+      disabled: false,
       badge: null,
     },
   ];
@@ -620,13 +634,6 @@ export default function Dashboard() {
 
   return (
     <div className="app-layout">
-      {/* Mobile Menu Button */}
-      <button
-        className="mobile-menu-btn"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
 
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
@@ -640,38 +647,114 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Language Switcher Bar in Sidebar */}
+        {/* Language selector dropdown */}
         <div
+          ref={langDropdownRef}
           style={{
+            position: 'relative',
             margin: '0 0 16px 0',
-            padding: '10px 14px',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-            <Globe size={16} style={{ color: 'var(--accent-primary)' }} />
-            <span>{t('language.switchLanguage')}:</span>
-          </div>
           <button
-            onClick={() => setShowLanguageModal(true)}
+            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
             style={{
-              background: 'var(--accent-primary-dim)',
-              border: '1px solid var(--border-color-hover)',
-              color: 'var(--accent-primary)',
-              borderRadius: 'var(--radius-btn-sm)',
-              padding: '4px 10px',
-              fontSize: '0.8rem',
-              fontWeight: 700,
+              width: '100%',
+              padding: '10px 14px',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-btn)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               cursor: 'pointer',
+              color: 'var(--text-primary)',
+              transition: 'all 0.2s ease',
             }}
           >
-            {language === 'en' ? 'EN' : language === 'si' ? 'SI' : 'TA'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', fontWeight: 600 }}>
+              <Globe size={16} style={{ color: 'var(--accent-primary)' }} />
+              <span>{language === 'en' ? 'English (EN)' : language === 'si' ? 'සිංහල (SI)' : 'தமிழ் (TA)'}</span>
+            </div>
+            <ChevronDown
+              size={16}
+              style={{
+                color: 'var(--text-secondary)',
+                transform: langDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease',
+              }}
+            />
           </button>
+
+          {/* Smooth Dropdown Menu */}
+          {langDropdownOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                left: 0,
+                right: 0,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-lg)',
+                padding: '6px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                zIndex: 100,
+                animation: 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            >
+              {[
+                { code: 'en', label: 'English', sub: 'Default', badge: 'EN' },
+                { code: 'si', label: 'සිංහල', sub: 'Sinhala', badge: 'SI' },
+                { code: 'ta', label: 'தமிழ்', sub: 'Tamil', badge: 'TA' },
+              ].map((langItem) => {
+                const isSelected = language === langItem.code;
+                return (
+                  <button
+                    key={langItem.code}
+                    onClick={() => {
+                      setLanguage(langItem.code as Language);
+                      setLangDropdownOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: isSelected ? 'var(--accent-primary-dim)' : 'transparent',
+                      border: 'none',
+                      color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: isSelected ? 700 : 500,
+                      textAlign: 'left',
+                      transition: 'background 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          padding: '2px 5px',
+                          borderRadius: '4px',
+                          border: '1px solid var(--border-color)',
+                          color: isSelected ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        }}
+                      >
+                        {langItem.badge}
+                      </span>
+                      <span>{langItem.label}</span>
+                    </div>
+                    {isSelected && <CheckCircle2 size={16} style={{ color: 'var(--accent-primary)' }} />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -682,7 +765,9 @@ export default function Dashboard() {
               onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
               disabled={disabled}
             >
-              <Icon size={20} className="nav-icon" />
+              <div className="nav-icon-box">
+                <Icon size={18} className="nav-icon" />
+              </div>
               <span className="nav-label">{label}</span>
               {badge !== null && (
                 <span
@@ -711,81 +796,144 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="main-content">
+        {/* Mobile Top App Bar (visible on <= 1024px) */}
+        <header className="mobile-app-header">
+          <div className="mobile-app-brand">
+            <div className="mobile-logo-icon">
+              <Stethoscope size={18} />
+            </div>
+            <div>
+              <span className="mobile-logo-title">{t('dashboard.logo')}</span>
+            </div>
+          </div>
+
+          <div className="mobile-header-actions">
+            {/* Mobile Language Dropdown */}
+            <div ref={mobileLangDropdownRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setMobileLangDropdownOpen(!mobileLangDropdownOpen)}
+                className="mobile-lang-btn"
+                aria-label="Change language"
+              >
+                <Globe size={15} />
+                <span>{language === 'en' ? 'EN' : language === 'si' ? 'SI' : 'TA'}</span>
+                <ChevronDown size={13} style={{ transform: mobileLangDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+              </button>
+
+              {mobileLangDropdownOpen && (
+                <div className="mobile-lang-menu">
+                  {[
+                    { code: 'en', label: 'English', badge: 'EN' },
+                    { code: 'si', label: 'සිංහල', badge: 'SI' },
+                    { code: 'ta', label: 'தமிழ்', badge: 'TA' },
+                  ].map((item) => (
+                    <button
+                      key={item.code}
+                      onClick={() => {
+                        setLanguage(item.code as Language);
+                        setMobileLangDropdownOpen(false);
+                      }}
+                      className={`mobile-lang-item ${language === item.code ? 'active' : ''}`}
+                    >
+                      <span>{item.badge} - {item.label}</span>
+                      {language === item.code && <CheckCircle2 size={14} />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <ThemeToggle size={36} />
+          </div>
+        </header>
+
         {/* Medical Disclaimer Banner */}
-        <div className="disclaimer-banner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="disclaimer-banner">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <ShieldAlert size={20} className="disclaimer-icon" />
+            <ShieldAlert size={22} className="disclaimer-icon" />
             <p>
               <strong>{t('disclaimer.title')}:</strong> {t('disclaimer.warning')}
             </p>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {(documents.length > 0 || timeline.length > 0) && (
-              <button
-                onClick={() => window.print()}
-                className="btn-print-slip"
-                title="Print or Save PDF Doctor Consultation Slip"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '4px 12px',
-                  borderRadius: 'var(--radius-btn-sm)',
-                  border: '1px solid var(--accent-primary)',
-                  background: 'var(--accent-primary-dim)',
-                  color: 'var(--accent-primary)',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <Printer size={14} />
-                <span>{language === 'si' ? 'වෛද්‍ය වාර්තාව (PDF)' : language === 'ta' ? 'மருத்துவர் அறிக்கை (PDF)' : 'Export Doctor Slip (PDF)'}</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => setShowLanguageModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: 'var(--radius-btn-sm)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.08)',
-                color: 'var(--text-primary)',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <Globe size={14} />
-              {language === 'en' ? 'English' : language === 'si' ? 'සිංහල' : 'தமிழ்'}
-            </button>
-          </div>
         </div>
+
+        {/* Compact Patient Info for Mobile (since sidebar is hidden) */}
+        {patient && patient.name && (
+          <div
+            className="mobile-patient-info"
+            style={{
+              display: 'none',
+              padding: '12px 16px',
+              background: 'var(--bg-glass-strong)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-color)',
+              marginBottom: 'var(--space-lg)',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <User size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {patient.name}
+              </span>
+              {patient.age && (
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  ({patient.age} {patient.gender ? `• ${patient.gender}` : ''})
+                </span>
+              )}
+            </div>
+            {patient.bloodGroup && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                {t('patient.bloodGroup')}: {patient.bloodGroup}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Processing Overlay */}
         {isProcessing && (
           <div className="glass-card" style={{ marginBottom: 'var(--space-lg)' }}>
             <div className="processing-overlay">
-              <div className="spinner spinner-lg" />
-              <h3>{processingStep}</h3>
-              <p>{t('common.loading')}</p>
+              <div className="scanning-container">
+                <div className="scanning-card">
+                  <div className="scanning-laser" />
+                  <svg className="scanning-document" viewBox="0 0 24 24" width="80" height="80">
+                    <path
+                      fill="currentColor"
+                      d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                      style={{ color: 'var(--accent-primary)', opacity: 0.85 }}
+                    />
+                  </svg>
+                  <div className="scanning-pulse" />
+                </div>
+                <h3 className="processing-step-text">{processingStep}</h3>
+                <p className="processing-sub-text">{t('common.loading')}</p>
+              </div>
             </div>
           </div>
         )}
 
         {/* TAB: Upload */}
         {activeTab === 'upload' && !isProcessing && (
-          <>
-            <div className="page-header">
-              <h2>{t('upload.title')}</h2>
-              <p>{t('dashboard.subtitle')}</p>
+          <div className="tab-pane">
+            <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h2>{t('upload.title')}</h2>
+                <p>{t('dashboard.subtitle')}</p>
+              </div>
+              {(extractedData.length > 0 || timeline.length > 0) && (
+                <button
+                  onClick={() => window.print()}
+                  className="btn-print-slip-large"
+                  title="Print or Save PDF Doctor Consultation Slip"
+                >
+                  <Printer size={18} />
+                  <span>{language === 'si' ? 'වෛද්‍ය වාර්තාව (PDF)' : language === 'ta' ? 'மருத்துவர் அறிக்கை (PDF)' : 'Export Doctor Slip (PDF)'}</span>
+                </button>
+              )}
             </div>
 
             <div className="glass-card" style={{ marginBottom: 'var(--space-lg)' }}>
@@ -888,12 +1036,12 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* TAB: Timeline */}
         {activeTab === 'timeline' && !isProcessing && (
-          <>
+          <div className="tab-pane">
             <div className="page-header">
               <h2>{t('timeline.title')}</h2>
               <p>{t('dashboard.subtitle')}</p>
@@ -951,15 +1099,26 @@ export default function Dashboard() {
                 <div className="empty-state">
                   <Clock size={80} className="empty-state-icon" />
                   <h3>{t('timeline.empty')}</h3>
+                  <p style={{ marginTop: '8px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '8px auto 0' }}>
+                    Please upload and analyze a medical document to automatically generate your chronologic healthcare timeline.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('upload')}
+                    className="btn btn-primary"
+                    style={{ marginTop: '16px' }}
+                  >
+                    <Upload size={16} />
+                    {t('upload.title') || 'Upload Document'}
+                  </button>
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* TAB: Alerts */}
         {activeTab === 'alerts' && !isProcessing && (
-          <>
+          <div className="tab-pane">
             <div className="page-header">
               <h2>{t('alerts.title')}</h2>
               <p>{t('alerts.checkInteractions')}</p>
@@ -1039,17 +1198,31 @@ export default function Dashboard() {
                   <div className="empty-state">
                     <Shield size={80} className="empty-state-icon" />
                     <h3>{t('alerts.noAlerts')}</h3>
-                    <p>{t('alerts.consult')}</p>
+                    <p style={{ marginTop: '8px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '8px auto 0' }}>
+                      {extractedData.length === 0
+                        ? 'Upload a prescription or medical report to check for drug interactions, duplicate medicines, and safety warnings.'
+                        : t('alerts.consult')}
+                    </p>
+                    {extractedData.length === 0 && (
+                      <button
+                        onClick={() => setActiveTab('upload')}
+                        className="btn btn-primary"
+                        style={{ marginTop: '16px' }}
+                      >
+                        <Upload size={16} />
+                        {t('upload.title') || 'Upload Document'}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
 
         {/* TAB: Trends */}
         {activeTab === 'trends' && !isProcessing && (
-          <>
+          <div className="tab-pane">
             <div className="page-header">
               <h2>{t('trends.title')}</h2>
               <p>{t('dashboard.subtitle')}</p>
@@ -1076,27 +1249,75 @@ export default function Dashboard() {
                 <div className="empty-state">
                   <TrendingUp size={80} className="empty-state-icon" />
                   <h3>{t('trends.noTrends')}</h3>
+                  <p style={{ marginTop: '8px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '8px auto 0' }}>
+                    Upload consecutive lab reports or test results to visualize and track your biomarker trends over time.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('upload')}
+                    className="btn btn-primary"
+                    style={{ marginTop: '16px' }}
+                  >
+                    <Upload size={16} />
+                    {t('upload.title') || 'Upload Document'}
+                  </button>
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* TAB: Chat */}
         {activeTab === 'chat' && !isProcessing && (
-          <>
+          <div className="tab-pane">
             <div className="page-header">
               <h2>{t('chat.title')}</h2>
               <p>{t('chat.disclaimer')}</p>
             </div>
 
             <div className="chat-container">
+              {/* WhatsApp / Telegram Header Bar */}
+              <div className="chat-header-bar">
+                <div className="chat-header-avatar">
+                  <Bot size={22} />
+                  <span className="chat-status-dot" />
+                </div>
+                <div className="chat-header-info">
+                  <div className="chat-header-name">
+                    Suwa Nalam AI Assistant
+                    <span className="chat-bot-badge">AI BOT</span>
+                  </div>
+                  <div className="chat-header-status">
+                    <span className="chat-online-indicator">Online</span> • Medical AI Assistant
+                  </div>
+                </div>
+                <div className="chat-header-actions">
+                  <div className="chat-encrypted-pill" title="End-to-end local clinical context encryption">
+                    <Shield size={13} />
+                    <span>Encrypted</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="chat-messages">
                 {chatMessages.length === 0 && (
                   <div className="empty-state" style={{ padding: 'var(--space-2xl)' }}>
                     <Bot size={64} className="empty-state-icon" />
-                    <h3>{t('chat.noMessages')}</h3>
-                    <p>{t('chat.placeholder')}</p>
+                    <h3>{extractedData.length === 0 ? 'Upload Documents to Start Chatting' : t('chat.noMessages')}</h3>
+                    <p style={{ marginTop: '8px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '8px auto 0' }}>
+                      {extractedData.length === 0
+                        ? 'Upload your prescriptions or medical reports first so the AI assistant can analyze your records and answer your health questions.'
+                        : t('chat.placeholder')}
+                    </p>
+                    {extractedData.length === 0 && (
+                      <button
+                        onClick={() => setActiveTab('upload')}
+                        className="btn btn-primary"
+                        style={{ marginTop: '16px' }}
+                      >
+                        <Upload size={16} />
+                        {t('upload.title') || 'Upload Document'}
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1142,8 +1363,12 @@ export default function Dashboard() {
                       <Bot size={18} />
                     </div>
                     <div className="chat-bubble" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="spinner" />
-                      {t('chat.loading')}
+                      <span className="typing-dots">
+                        <span className="typing-dot" />
+                        <span className="typing-dot" />
+                        <span className="typing-dot" />
+                      </span>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{t('chat.loading')}</span>
                     </div>
                   </div>
                 )}
@@ -1185,7 +1410,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {/* Printable Doctor Consultation Slip (Only rendered during print/export) */}
@@ -1322,6 +1547,9 @@ export default function Dashboard() {
           );
         })}
       </nav>
+      {showLanguageModal && (
+        <LanguageSelector allowClose onComplete={() => setShowLanguageModal(false)} />
+      )}
     </div>
   );
 }
