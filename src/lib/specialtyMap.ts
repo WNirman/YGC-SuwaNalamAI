@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Infer the most relevant specialist from alert type + description text.
  * This is the deterministic fallback used in demo/mock mode.
  * In real mode, the AI (Groq/OpenAI) provides suggestedSpecialty directly.
@@ -65,4 +65,23 @@ export function specialtyToOsmRegex(specialty: string): string {
 export function specialtyToGoogleQuery(specialty: string, location: string): string {
   const specialistTerm = specialty === 'Clinical Pharmacist' ? 'pharmacy' : `${specialty} doctor`;
   return `${specialistTerm} near ${location}`;
+}
+
+/**
+ * Map medical specialty to Google Places API (New) valid includedType category filter.
+ * Google Places API v1 searchText accepts `includedType`.
+ * Valid place types: 'hospital', 'doctor', 'pharmacy', 'medical_lab'
+ */
+export function specialtyToGooglePlaceType(specialty: string): string {
+  const clean = specialty.toLowerCase();
+  if (clean.includes('pharmacist') || clean.includes('pharmacy') || clean.includes('dispensary') || clean.includes('chemist')) {
+    return 'pharmacy';
+  }
+  if (clean.includes('lab') || clean.includes('blood') || clean.includes('diagnostic') || clean.includes('pathology')) {
+    return 'medical_lab';
+  }
+  if (clean.includes('practitioner') || clean.includes('general') || clean.includes('family') || clean.includes('clinic')) {
+    return 'doctor';
+  }
+  return 'hospital';
 }

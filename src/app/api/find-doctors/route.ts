@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { specialtyToOsmRegex, specialtyToGoogleQuery } from '@/lib/specialtyMap';
+import { specialtyToOsmRegex, specialtyToGoogleQuery, specialtyToGooglePlaceType } from '@/lib/specialtyMap';
 import type { DoctorResult, FindDoctorsResponse } from '@/types/medical';
 
 export const runtime = 'nodejs';
@@ -128,6 +128,51 @@ async function geocodeCity(location: string): Promise<{ lat: number; lon: number
 }
 
 // ============================================================
+// Multi-Criteria Decision Ranking for Healthcare Facilities:
+// Combines:
+// 1. Proximity (Haversine distance decay) - 50% weight
+// 2. Bayesian-Smoothed Rating (Rating * reviews + Prior * priorWeight) - 35% weight
+// 3. Specialty Department Alignment (relevance keyword match) - 15% weight
+// ============================================================
+function rankDoctorsSmart(doctors: DoctorResult[], targetSpecialty: string): DoctorResult[] {
+  if (doctors.length <= 1) return doctors;
+
+  const cleanTarget = targetSpecialty.toLowerCase();
+  const PRIOR_RATING = 4.2; // Baseline prior for established medical centers
+  const PRIOR_COUNT = 15;   // Bayesian smoothing weight
+
+  return [...doctors].sort((a, b) => {
+    // 1. Proximity Score (0.0 to 1.0, non-linear distance decay)
+    const scoreDistA = 1 / (1 + a.distanceKm / 8);
+    const scoreDistB = 1 / (1 + b.distanceKm / 8);
+
+    // 2. Bayesian Smoothed Rating Score (0.0 to 1.0)
+    const ratingA = a.rating ?? PRIOR_RATING;
+    const countA = a.totalRatings ?? PRIOR_COUNT;
+    const bayesA = (ratingA * countA + PRIOR_RATING * PRIOR_COUNT) / (countA + PRIOR_COUNT);
+    const scoreRatingA = bayesA / 5.0;
+
+    const ratingB = b.rating ?? PRIOR_RATING;
+    const countB = b.totalRatings ?? PRIOR_COUNT;
+    const bayesB = (ratingB * countB + PRIOR_RATING * PRIOR_COUNT) / (countB + PRIOR_COUNT);
+    const scoreRatingB = bayesB / 5.0;
+
+    // 3. Specialty Alignment Bonus (0.4 to 1.0)
+    const specA = (a.inferredSpecialty || a.name).toLowerCase();
+    const specB = (b.inferredSpecialty || b.name).toLowerCase();
+    const targetToken = cleanTarget.split('/')[0].trim().toLowerCase();
+    const scoreSpecA = specA.includes(targetToken) ? 1.0 : 0.4;
+    const scoreSpecB = specB.includes(targetToken) ? 1.0 : 0.4;
+
+    // Composite Weighted Healthcare Utility Score
+    const compositeA = 0.50 * scoreDistA + 0.35 * scoreRatingA + 0.15 * scoreSpecA;
+    const compositeB = 0.50 * scoreDistB + 0.35 * scoreRatingB + 0.15 * scoreSpecB;
+
+    return compositeB - compositeA; // Higher composite score ranks first
+  });
+}
+
+// ============================================================
 // Google Maps Places API (New) — Text Search strictly in Sri Lanka
 // ============================================================
 async function searchGoogleMaps(
@@ -139,52 +184,53 @@ async function searchGoogleMaps(
 ): Promise<DoctorResult[]> {
   try {
     const cleanCity = cityOrArea.split(',')[0].trim();
+    const includedType = specialtyToGooglePlaceType(specialty);
     // Query format strictly constrained to Sri Lanka
     const query = `${specialty} hospital or clinic in ${cleanCity}, Sri Lanka`;
 
-    const body = {
-      textQuery: query,
-      locationBias: {
-        circle: {
-          center: { latitude: lat, longitude: lon },
-          radius: 25000.0, // 25km circle
+    const requestPlaces = async (withTypeFilter: boolean) => {
+      const body: Record<string, any> = {
+        textQuery: query,
+        locationBias: {
+          circle: {
+            center: { latitude: lat, longitude: lon },
+            radius: 25000.0, // 25km circle
+          },
         },
-      },
-      maxResultCount: 8,
+        maxResultCount: 12,
+      };
+
+      // Add strict category filter from Google Places API Table A
+      if (withTypeFilter && includedType) {
+        body.includedType = includedType;
+      }
+
+      return await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': googleKey,
+          'X-Goog-FieldMask':
+            'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.nationalPhoneNumber,places.regularOpeningHours.weekdayDescriptions,places.location,places.types,places.photos',
+        },
+        body: JSON.stringify(body),
+      });
     };
 
-    const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': googleKey,
-        'X-Goog-FieldMask':
-          'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.nationalPhoneNumber,places.regularOpeningHours.weekdayDescriptions,places.location,places.types,places.photos',
-      },
-      body: JSON.stringify(body),
-    });
+    // Primary attempt with strict includedType filter
+    let res = await requestPlaces(true);
+    let data = res.ok ? ((await res.json()) as { places?: any[] }) : null;
 
-    if (!res.ok) return [];
+    // Resilient fallback if strict type filter yields no results in smaller regional areas
+    if (!data?.places || data.places.length === 0) {
+      res = await requestPlaces(false);
+      data = res.ok ? ((await res.json()) as { places?: any[] }) : null;
+    }
 
-    const data = (await res.json()) as {
-      places?: Array<{
-        id: string;
-        displayName?: { text: string };
-        formattedAddress?: string;
-        rating?: number;
-        userRatingCount?: number;
-        nationalPhoneNumber?: string;
-        regularOpeningHours?: { weekdayDescriptions?: string[] };
-        location?: { latitude: number; longitude: number };
-        types?: string[];
-      photos?: Array<{ name: string; widthPx?: number; heightPx?: number }>;
-      }>;
-    };
-
-    if (!data.places || data.places.length === 0) return [];
+    if (!data?.places || data.places.length === 0) return [];
 
     // Filter to Sri Lanka only
-    return data.places
+    const mapped = data.places
       .filter((p) => {
         if (!p.displayName?.text) return false;
         const addr = (p.formattedAddress || '').toLowerCase();
@@ -225,8 +271,10 @@ async function searchGoogleMaps(
           lon: placeLon,
           dataSource: 'google',
         };
-      })
-      .sort((a, b) => a.distanceKm - b.distanceKm);
+      });
+
+    // Apply multi-criteria smart ranking (Bayesian rating + distance + specialty alignment)
+    return rankDoctorsSmart(mapped, specialty);
   } catch {
     return [];
   }
@@ -242,7 +290,7 @@ function getVerifiedNearbyFacilities(
 ): DoctorResult[] {
   const cleanSpec = specialty.toLowerCase();
   
-  return VERIFIED_FACILITIES.map((f, i): DoctorResult => {
+  const mapped = VERIFIED_FACILITIES.map((f, i): DoctorResult => {
     const dist = haversineKm(userLat, userLon, f.lat, f.lon);
     const deptLower = f.specialtyDept.toLowerCase();
 
@@ -265,7 +313,9 @@ function getVerifiedNearbyFacilities(
       lon: f.lon,
       dataSource: 'osm',
     };
-  }).sort((a, b) => a.distanceKm - b.distanceKm);
+  });
+
+  return rankDoctorsSmart(mapped, specialty);
 }
 
 // ============================================================
