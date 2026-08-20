@@ -34,6 +34,7 @@ import {
   Sparkles,
   XCircle,
   Globe,
+  Printer,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -719,26 +720,53 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowLanguageModal(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 12px',
-              borderRadius: 'var(--radius-btn-sm)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.08)',
-              color: 'var(--text-primary)',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <Globe size={14} />
-            {language === 'en' ? 'English' : language === 'si' ? 'සිංහල' : 'தமிழ்'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {(documents.length > 0 || timeline.length > 0) && (
+              <button
+                onClick={() => window.print()}
+                className="btn-print-slip"
+                title="Print or Save PDF Doctor Consultation Slip"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 12px',
+                  borderRadius: 'var(--radius-btn-sm)',
+                  border: '1px solid var(--accent-primary)',
+                  background: 'var(--accent-primary-dim)',
+                  color: 'var(--accent-primary)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Printer size={14} />
+                <span>{language === 'si' ? 'වෛද්‍ය වාර්තාව (PDF)' : language === 'ta' ? 'மருத்துவர் அறிக்கை (PDF)' : 'Export Doctor Slip (PDF)'}</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowLanguageModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-btn-sm)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.08)',
+                color: 'var(--text-primary)',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Globe size={14} />
+              {language === 'en' ? 'English' : language === 'si' ? 'සිංහල' : 'தமிழ்'}
+            </button>
+          </div>
         </div>
 
         {/* Processing Overlay */}
@@ -1158,6 +1186,107 @@ export default function Dashboard() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Printable Doctor Consultation Slip (Only rendered during print/export) */}
+        {(documents.length > 0 || timeline.length > 0) && (
+          <div className="print-consultation-slip" aria-hidden="true">
+            <div className="print-slip-header">
+              <div className="print-slip-brand">
+                <h2>YGC — Suwa Nalam AI (සුව நலம் AI)</h2>
+                <div className="print-slip-badge">PATIENT SAFETY CONSULTATION HANDOVER SLIP</div>
+              </div>
+              <p className="print-slip-sub">
+                Official Clinical Summary extracted across {documents.length} medical document(s) for physician review.
+              </p>
+              <div className="print-meta-grid">
+                <div><strong>Patient Name:</strong> {patient?.name || 'Patient'}</div>
+                <div><strong>Age / Gender:</strong> {patient?.age || 'N/A'} / {patient?.gender || 'N/A'}</div>
+                <div><strong>Date Generated:</strong> {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                <div><strong>Overall Risk Level:</strong> {overallRiskLevel.toUpperCase()}</div>
+              </div>
+            </div>
+
+            {/* Medications Table */}
+            <div className="print-section">
+              <h3 className="print-section-title">1. Current Medications Across All Encounters</h3>
+              <table className="print-table">
+                <thead>
+                  <tr>
+                    <th>Medication Name</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Prescribing Provider / Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {extractedData.flatMap((d) => d.medications || []).length > 0 ? (
+                    extractedData.flatMap((d) => d.medications || []).map((med, idx) => (
+                      <tr key={idx}>
+                        <td><strong>{med.name}</strong> {med.genericName ? `(${med.genericName})` : ''}</td>
+                        <td>{med.dosage || 'As directed'}</td>
+                        <td>{med.frequency || 'Daily'}</td>
+                        <td>{med.prescribedBy || 'Document record'} {med.prescribedDate ? `(${med.prescribedDate})` : ''}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4}>No specific medications recorded.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Identified Safety Alerts */}
+            {alerts.length > 0 && (
+              <div className="print-section">
+                <h3 className="print-section-title">2. Detected Drug Interactions & Safety Warnings</h3>
+                <div className="print-alerts-list">
+                  {alerts.map((alert, idx) => (
+                    <div key={idx} className={`print-alert-item ${alert.severity}`}>
+                      <div className="print-alert-headline">
+                        <span className="print-severity-tag">[{alert.severity.toUpperCase()}]</span>
+                        <strong>{alert.title}</strong>
+                        <span className="print-confidence">({alert.confidenceScore}% AI Confidence)</span>
+                      </div>
+                      <p className="print-alert-body">{alert.description}</p>
+                      <p className="print-alert-action"><strong>Recommended Action:</strong> {alert.recommendation}</p>
+                      {alert.suggestedSpecialty && (
+                        <p className="print-alert-action">
+                          <strong>Recommended Specialty Consultation:</strong> {alert.suggestedSpecialty} ({alert.urgencyHint === 'immediate' ? 'Immediate / Urgent' : 'Routine / This Week'})
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lab Trends Summary */}
+            {(trendsSummary || trends.length > 0) && (
+              <div className="print-section">
+                <h3 className="print-section-title">3. Laboratory Trends & Biomarker Trajectory</h3>
+                {trendsSummary && <p className="print-trends-overview">{trendsSummary}</p>}
+                {trends.length > 0 && (
+                  <ul className="print-trends-bullets">
+                    {trends.map((t, idx) => (
+                      <li key={idx}>
+                        <strong>{t.testName} ({t.unit}):</strong> {t.trendDirection.toUpperCase()} trend — {t.explanation} (Normal Range: {t.normalRangeMin}–{t.normalRangeMax} {t.unit})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* Footer Disclaimer */}
+            <div className="print-slip-footer">
+              <p>
+                <strong>Clinical Notice:</strong> This document is an automated synthesis compiled by Suwa Nalam AI to assist in clinical handover and multi-prescription cross-checking. It is designed to aid healthcare professionals and does not substitute for independent medical examination, diagnosis, or clinical judgment.
+              </p>
+            </div>
+          </div>
         )}
       </main>
 

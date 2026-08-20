@@ -2647,3 +2647,229 @@ body {
     transition: none;
   }
 }
+
+/* ============================================================
+   Doctor Consultation Handover Slip (Print / Export PDF View)
+   ============================================================ */
+.print-consultation-slip {
+  display: none;
+}
+
+@media print {
+  /* Hide all dashboard screen UI chrome */
+  body, html {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 10.5pt !important;
+  }
+
+  .sidebar,
+  .mobile-menu-btn,
+  .bottom-nav,
+  .disclaimer-banner,
+  .theme-toggle,
+  .page-header,
+  .upload-zone,
+  .file-list,
+  .stats-grid,
+  .timeline,
+  .alert-panel,
+  .summary-card,
+  .trends-grid,
+  .chat-container,
+  .empty-state,
+  .btn-print-slip,
+  .disclaimer-fullscreen-wrapper,
+  .language-modal-overlay {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .print-consultation-slip {
+    display: block !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    padding: 16px 20px !important;
+  }
+
+  .print-slip-header {
+    border-bottom: 2px solid #0f766e;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+
+  .print-slip-brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .print-slip-brand h2 {
+    margin: 0;
+    font-size: 16pt;
+    color: #0f766e;
+    font-weight: 800;
+  }
+
+  .print-slip-badge {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .print-slip-sub {
+    margin: 4px 0 10px 0;
+    font-size: 9pt;
+    color: #6b7280;
+  }
+
+  .print-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    background: #f9fafb;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    font-size: 9pt;
+  }
+
+  .print-section {
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+  }
+
+  .print-section-title {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .print-table th {
+    background: #f3f4f6;
+    color: #374151;
+    text-align: left;
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    font-weight: 600;
+  }
+
+  .print-table td {
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    color: #1f2937;
+  }
+
+  .print-alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .print-alert-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 4px solid #ef4444;
+    background: #fff5f5;
+    border-top: 1px solid #fee2e2;
+    border-right: 1px solid #fee2e2;
+    border-bottom: 1px solid #fee2e2;
+    page-break-inside: avoid;
+    font-size: 9pt;
+  }
+
+  .print-alert-item.major {
+    border-left-color: #f97316;
+    background: #fffaf0;
+    border-color: #ffedd5;
+  }
+
+  .print-alert-item.moderate {
+    border-left-color: #eab308;
+    background: #fefce8;
+    border-color: #fef08a;
+  }
+
+  .print-alert-item.minor {
+    border-left-color: #3b82f6;
+    background: #eff6ff;
+    border-color: #dbeafe;
+  }
+
+  .print-alert-headline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    color: #111827;
+  }
+
+  .print-severity-tag {
+    font-weight: 800;
+    font-size: 8pt;
+  }
+
+  .print-confidence {
+    font-size: 8pt;
+    color: #6b7280;
+    margin-left: auto;
+  }
+
+  .print-alert-body {
+    margin: 0 0 4px 0;
+    color: #374151;
+  }
+
+  .print-alert-action {
+    margin: 0;
+    color: #0f766e;
+    font-size: 8.5pt;
+  }
+
+  .print-trends-overview {
+    font-size: 9pt;
+    margin: 0 0 6px 0;
+    color: #374151;
+  }
+
+  .print-trends-bullets {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 8.5pt;
+    line-height: 1.4;
+    color: #374151;
+  }
+
+  .print-slip-footer {
+    margin-top: 20px;
+    padding-top: 8px;
+    border-top: 1px solid #d1d5db;
+    font-size: 7.5pt;
+    color: #6b7280;
+    line-height: 1.4;
+    page-break-inside: avoid;
+  }
+}
+
