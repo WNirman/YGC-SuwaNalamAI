@@ -50,14 +50,14 @@ export function DisclaimerScreen({ onAccept }: DisclaimerScreenProps) {
               <strong>{t('disclaimer.content')}</strong>
             </p>
             <p>{t('disclaimer.contentDetails')}</p>
-            <p style={{ color: '#0f766e', fontWeight: 600 }}>
+            <p style={{ color: '#606060', fontWeight: 600 }}>
               {t('disclaimer.warning')}
             </p>
           </div>
 
           <div className="disclaimer-risk-box">
             <div className="risk-header">
-              <ShieldAlert size={15} style={{ color: '#ef4444' }} />
+              <ShieldAlert size={15} style={{ color: '#686868' }} />
               <span>{t('disclaimer.risks')}</span>
             </div>
             <ul>
@@ -70,7 +70,7 @@ export function DisclaimerScreen({ onAccept }: DisclaimerScreenProps) {
 
           {declined ? (
             <div className="decline-notice-box">
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#ef4444', fontWeight: 600 }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#686868', fontWeight: 600 }}>
                 You have declined the disclaimer. You must accept to proceed.
               </p>
               <button

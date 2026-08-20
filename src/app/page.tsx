@@ -74,6 +74,9 @@ import {
 } from '@/lib/mockData';
 import { useI18n, Language } from '@/lib/i18n';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { SweepButton } from '@/components/SweepButton';
+import { AssistantOrb } from '@/components/AssistantOrb';
 import { DisclaimerScreen } from '@/components/DisclaimerScreen';
 import { FindDoctorPanel } from '@/components/FindDoctorPanel';
 import { inferSpecialty } from '@/lib/specialtyMap';
@@ -557,6 +560,63 @@ export default function Dashboard() {
   // ============================================================
   // STEP 4: Main Application (Loaded in Selected Language)
   // ============================================================
+  // Tab definitions — rendered by both the sidebar nav and the mobile bottom bar
+  const tabs: {
+    id: typeof activeTab;
+    Icon: typeof Upload;
+    label: string;
+    disabled: boolean;
+    badge: number | null;
+    badgeColor?: string;
+  }[] = [
+    {
+      id: 'upload',
+      Icon: Upload,
+      label: t('dashboard.uploadTabName'),
+      disabled: false,
+      badge: null,
+    },
+    {
+      id: 'timeline',
+      Icon: Clock,
+      label: t('dashboard.timelineTabName'),
+      disabled: timeline.length === 0,
+      badge: timeline.length > 0 ? timeline.length : null,
+      badgeColor: 'var(--color-info)',
+    },
+    {
+      id: 'alerts',
+      Icon: AlertTriangle,
+      label: t('dashboard.alertsTabName'),
+      disabled: extractedData.length === 0,
+      badge: alertCount > 0 ? alertCount : null,
+    },
+    {
+      id: 'trends',
+      Icon: TrendingUp,
+      label: t('dashboard.trendsTabName'),
+      disabled: trends.length === 0,
+      badge: null,
+    },
+    {
+      id: 'chat',
+      Icon: MessageCircle,
+      label: t('dashboard.chatTabName'),
+      disabled: extractedData.length === 0,
+      badge: null,
+    },
+  ];
+
+  // Bottom bar ordering: the AI assistant is pulled into the centre slot so it
+  // renders as the raised action, with the other tabs split either side.
+  const assistantTab = tabs.find((tab) => tab.id === 'chat')!;
+  const sideTabs = tabs.filter((tab) => tab.id !== 'chat');
+  const bottomTabs = [
+    ...sideTabs.slice(0, Math.ceil(sideTabs.length / 2)),
+    assistantTab,
+    ...sideTabs.slice(Math.ceil(sideTabs.length / 2)),
+  ];
+
   return (
     <div className="app-layout">
       {/* Mobile Menu Button */}
@@ -584,9 +644,9 @@ export default function Dashboard() {
           style={{
             margin: '0 0 16px 0',
             padding: '10px 14px',
-            background: 'rgba(255, 255, 255, 0.04)',
+            background: 'rgba(255,255,255,0.04)',
             border: '1px solid var(--border-color)',
-            borderRadius: '12px',
+            borderRadius: '0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -602,97 +662,50 @@ export default function Dashboard() {
               background: 'var(--accent-primary-dim)',
               border: '1px solid var(--border-color-hover)',
               color: 'var(--accent-primary)',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-btn-sm)',
               padding: '4px 10px',
               fontSize: '0.8rem',
               fontWeight: 700,
               cursor: 'pointer',
             }}
           >
-            {language === 'en' ? '🇬🇧 EN' : language === 'si' ? '🇱🇰 SI' : '🇱🇰 TA'}
+            {language === 'en' ? 'EN' : language === 'si' ? 'SI' : 'TA'}
           </button>
         </div>
 
         <nav className="sidebar-nav">
-          <button
-            className={`nav-item ${activeTab === 'upload' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('upload'); setSidebarOpen(false); }}
-          >
-            <Upload size={20} className="nav-icon" />
-            {t('dashboard.uploadTabName')}
-          </button>
-          <button
-            className={`nav-item ${activeTab === 'timeline' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('timeline'); setSidebarOpen(false); }}
-            disabled={timeline.length === 0}
-          >
-            <Clock size={20} className="nav-icon" />
-            {t('dashboard.timelineTabName')}
-            {timeline.length > 0 && (
-              <span className="nav-badge" style={{ background: 'var(--color-info)' }}>
-                {timeline.length}
-              </span>
-            )}
-          </button>
-          <button
-            className={`nav-item ${activeTab === 'alerts' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('alerts'); setSidebarOpen(false); }}
-            disabled={extractedData.length === 0}
-          >
-            <AlertTriangle size={20} className="nav-icon" />
-            {t('dashboard.alertsTabName')}
-            {alertCount > 0 && (
-              <span className="nav-badge">{alertCount}</span>
-            )}
-          </button>
-          <button
-            className={`nav-item ${activeTab === 'trends' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('trends'); setSidebarOpen(false); }}
-            disabled={trends.length === 0}
-          >
-            <TrendingUp size={20} className="nav-icon" />
-            {t('dashboard.trendsTabName')}
-          </button>
-          <button
-            className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('chat'); setSidebarOpen(false); }}
-            disabled={extractedData.length === 0}
-          >
-            <MessageCircle size={20} className="nav-icon" />
-            {t('dashboard.chatTabName')}
-          </button>
-
+          {tabs.map(({ id, Icon, label, disabled, badge, badgeColor }) => (
+            <button
+              key={id}
+              className={`nav-item ${activeTab === id ? 'active' : ''}`}
+              onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
+              disabled={disabled}
+            >
+              <Icon size={20} className="nav-icon" />
+              <span className="nav-label">{label}</span>
+              {badge !== null && (
+                <span
+                  className="nav-badge"
+                  style={badgeColor ? { background: badgeColor } : undefined}
+                >
+                  {badge}
+                </span>
+              )}
+            </button>
+          ))}
         </nav>
 
-        {/* Patient Info (if available) */}
-        {patient && patient.name && (
-          <div
-            style={{
-              marginTop: 'auto',
-              padding: 'var(--space-md)',
-              background: 'var(--bg-tertiary)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <User size={16} style={{ color: 'var(--accent-primary)' }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                {patient.name}
-              </span>
-            </div>
-            {patient.age && (
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                {t('patient.age')}: {patient.age} {patient.gender ? `• ${patient.gender}` : ''}
-              </p>
-            )}
-            {patient.bloodGroup && (
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                {t('patient.bloodGroup')}: {patient.bloodGroup}
-              </p>
-            )}
-          </div>
-        )}
+        {/* Sidebar footer — theme switch */}
+        <div
+          style={{
+            marginTop: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <ThemeToggle size={40} />
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -713,9 +726,9 @@ export default function Dashboard() {
               alignItems: 'center',
               gap: '6px',
               padding: '4px 12px',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              background: 'rgba(255, 255, 255, 0.08)',
+              borderRadius: 'var(--radius-btn-sm)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.08)',
               color: 'var(--text-primary)',
               fontSize: '0.78rem',
               fontWeight: 600,
@@ -774,14 +787,13 @@ export default function Dashboard() {
                     <FileText size={20} />
                     {t('stats.documentsUploaded')} ({documents.length})
                   </h3>
-                  <button
-                    className="btn btn-primary"
+                  <SweepButton
                     onClick={processDocuments}
                     disabled={isProcessing || documents.length === 0}
+                    icon={<Sparkles size={18} />}
                   >
-                    <Sparkles size={18} />
                     {t('upload.processButton')}
-                  </button>
+                  </SweepButton>
                 </div>
 
                 <div className="file-list">
@@ -1081,7 +1093,7 @@ export default function Dashboard() {
                           )}
                           {msg.sourceDocuments?.map((src, i) => (
                             <span key={i} className="chat-source-tag">
-                              📄 {src}
+                               {src}
                             </span>
                           ))}
                         </div>
@@ -1148,6 +1160,39 @@ export default function Dashboard() {
           </>
         )}
       </main>
+
+      {/* Mobile bottom tab bar — the AI assistant sits raised in the middle,
+          with the remaining tabs split two either side. */}
+      <nav className="bottom-nav">
+        {bottomTabs.map(({ id, Icon, label, disabled, badge, badgeColor }) => {
+          const isAssistant = id === 'chat';
+          return (
+            <button
+              key={id}
+              className={`bottom-nav-item ${isAssistant ? 'is-assistant' : ''} ${
+                activeTab === id ? 'active' : ''
+              }`}
+              onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
+              disabled={disabled}
+              aria-label={label}
+              aria-current={activeTab === id ? 'page' : undefined}
+            >
+              <span className="bottom-nav-icon">
+                {isAssistant ? <AssistantOrb size={26} /> : <Icon size={20} />}
+                {badge !== null && (
+                  <span
+                    className="bottom-nav-badge"
+                    style={badgeColor ? { background: badgeColor } : undefined}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </span>
+              <span className="bottom-nav-label">{label}</span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 }
@@ -1270,10 +1315,10 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
                         fontSize: '0.8rem',
                         background: 'var(--color-danger-dim)',
                         color: 'var(--color-danger)',
-                        borderColor: 'rgba(239,68,68,0.3)',
+                        borderColor: 'rgba(104,104,104,0.3)',
                       }}
                     >
-                      ⚠️ {a}
+                       {a}
                     </span>
                   ))}
                 </div>
@@ -1309,8 +1354,8 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
         data: trend.dataPoints.map((dp) => dp.value),
         borderColor: trend.isWorrying ? 'var(--color-danger)' : 'var(--accent-primary)',
         backgroundColor: trend.isWorrying
-          ? 'rgba(239, 68, 68, 0.1)'
-          : 'rgba(37, 99, 235, 0.1)',
+          ? 'rgba(104,104,104,0.12)'
+          : 'rgba(29,95,208,0.14)',
         borderWidth: 2,
         pointBackgroundColor: trend.dataPoints.map((dp) => {
           const val = dp.value;
@@ -1348,11 +1393,11 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
     },
     scales: {
       x: {
-        grid: { color: 'rgba(148, 163, 184, 0.18)' },
+        grid: { color: 'rgba(161,161,161,0.18)' },
         ticks: { color: 'var(--text-tertiary)', font: { size: 11 } },
       },
       y: {
-        grid: { color: 'rgba(148, 163, 184, 0.18)' },
+        grid: { color: 'rgba(161,161,161,0.18)' },
         ticks: { color: 'var(--text-tertiary)', font: { size: 11 } },
         suggestedMin: Math.min(trend.normalRangeMin * 0.8, ...trend.dataPoints.map((d) => d.value)),
         suggestedMax: Math.max(trend.normalRangeMax * 1.2, ...trend.dataPoints.map((d) => d.value)),

@@ -81,7 +81,7 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
         const userLat = position.coords.latitude;
         const userLon = position.coords.longitude;
         setCoords({ lat: userLat, lon: userLon });
-        setLocation(t('findDoctor.currentLocationDetected') || '📍 Current GPS Location');
+        setLocation(t('findDoctor.currentLocationDetected') || ' Current GPS Location');
         setIsLocating(false);
         // Automatically search with coordinates
         triggerSearch({ lat: userLat, lon: userLon, locText: '' });
@@ -180,7 +180,7 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
             gap: '8px',
             padding: '9px 16px',
             borderRadius: 'var(--radius-full)',
-            border: '1px solid rgba(37,99,235,0.3)',
+            border: '1px solid rgba(96,96,96,0.3)',
             background: 'var(--accent-primary-dim)',
             color: 'var(--accent-primary)',
             fontSize: '0.82rem',
@@ -189,7 +189,7 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
             transition: 'var(--transition-fast)',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(37,99,235,0.2)';
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(96,96,96,0.2)';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent-primary-dim)';
@@ -211,8 +211,8 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
       style={{
         marginTop: '14px',
         borderRadius: 'var(--radius-lg)',
-        border: '1px solid rgba(37,99,235,0.22)',
-        background: 'linear-gradient(135deg, rgba(37,99,235,0.04), rgba(20,184,166,0.04))',
+        border: '1px solid rgba(96,96,96,0.22)',
+        background: 'linear-gradient(135deg, rgba(96,96,96,0.04), rgba(148,148,148,0.04))',
         overflow: 'hidden',
       }}
     >
@@ -220,11 +220,11 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
       <div
         style={{
           padding: '14px 18px',
-          borderBottom: '1px solid rgba(37,99,235,0.12)',
+          borderBottom: '1px solid rgba(96,96,96,0.12)',
           display: 'flex',
           alignItems: 'flex-start',
           gap: '12px',
-          background: 'rgba(37,99,235,0.05)',
+          background: 'rgba(96,96,96,0.05)',
         }}
       >
         <div
@@ -294,7 +294,7 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
                   gap: '8px',
                   padding: '10px 16px',
                   borderRadius: 'var(--radius-md)',
-                  background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(20,184,166,0.12))',
+                  background: 'linear-gradient(135deg, rgba(96,96,96,0.12), rgba(148,148,148,0.12))',
                   border: '1px solid var(--border-color-hover)',
                   color: 'var(--accent-primary)',
                   fontWeight: 600,
@@ -311,7 +311,7 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
                 ) : (
                   <>
                     <LocateFixed size={16} />
-                    <span>{t('findDoctor.useLocation') || '📍 Use My Current Location (Near Me)'}</span>
+                    <span>{t('findDoctor.useLocation') || ' Use My Current Location (Near Me)'}</span>
                   </>
                 )}
               </button>
@@ -343,7 +343,7 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
                     padding: '3px 10px',
                     borderRadius: 'var(--radius-full)',
                     background: location === city ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
-                    color: location === city ? '#fff' : 'var(--text-secondary)',
+                    color: location === city ? '#ffffff' : 'var(--text-secondary)',
                     border: '1px solid var(--border-color)',
                     fontSize: '0.74rem',
                     fontWeight: 500,
@@ -730,7 +730,7 @@ function DoctorCard({ doc, index, specialty }: { doc: DoctorResult; index: numbe
                 gap: '3px',
                 padding: '2px 8px',
                 borderRadius: 'var(--radius-full)',
-                background: 'rgba(245,158,11,0.1)',
+                background: 'rgba(166,166,166,0.1)',
                 color: 'var(--color-warning)',
                 fontSize: '0.72rem',
                 fontWeight: 600,

@@ -9,58 +9,72 @@
    CSS Custom Properties — Design Tokens
    ============================================================ */
 :root {
-  /* Color Palette — Light Medical Blue/Teal */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #eef2f7;
-  --bg-tertiary: #e2e8f0;
-  --bg-card: rgba(255, 255, 255, 0.92);
+  /* Color Palette — neutral base with a clinical blue accent */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f6f8;
+  --bg-tertiary: #e7eaee;
+  --bg-card: rgba(255, 255, 255, 0.94);
   --bg-card-hover: rgba(255, 255, 255, 1);
-  --bg-glass: rgba(255, 255, 255, 0.72);
-  --bg-glass-strong: rgba(255, 255, 255, 0.88);
-  
-  /* Accent Colors */
-  --accent-primary: #2563eb;
-  --accent-primary-dim: rgba(37, 99, 235, 0.12);
-  --accent-secondary: #0f766e;
-  --accent-secondary-dim: rgba(15, 118, 110, 0.12);
-  --accent-teal: #14b8a6;
-  --accent-teal-dim: rgba(20, 184, 166, 0.12);
-  
-  /* Semantic Colors */
-  --color-success: #22c55e;
-  --color-success-dim: rgba(34, 197, 94, 0.12);
-  --color-warning: #f59e0b;
-  --color-warning-dim: rgba(245, 158, 11, 0.12);
-  --color-danger: #ef4444;
-  --color-danger-dim: rgba(239, 68, 68, 0.12);
-  --color-info: #3b82f6;
-  --color-info-dim: rgba(59, 130, 246, 0.12);
-  
-  /* Text Colors */
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-tertiary: #64748b;
-  --text-muted: #94a3b8;
-  
+  --bg-glass: rgba(255, 255, 255, 0.74);
+  --bg-glass-strong: rgba(255, 255, 255, 0.9);
+
+  /* Accents — blue carries interaction; grays carry structure */
+  --accent-primary: #1d5fd0;
+  --accent-primary-dim: rgba(29, 95, 208, 0.10);
+  --accent-secondary: #17457f;
+  --accent-secondary-dim: rgba(23, 69, 127, 0.10);
+  --accent-teal: #3d7fd6;
+  --accent-teal-dim: rgba(61, 127, 214, 0.10);
+
+  /* Semantic — severity stays neutral so it never competes with the accent;
+     it is encoded by darkness: danger darkest, then warning, then success.
+     Info is the accent blue, since "informational" and "interactive" align. */
+  --color-danger: #14181d;
+  --color-danger-dim: rgba(20, 24, 29, 0.10);
+  --color-warning: #4a5058;
+  --color-warning-dim: rgba(74, 80, 88, 0.10);
+  --color-info: #1d5fd0;
+  --color-info-dim: rgba(29, 95, 208, 0.10);
+  --color-success: #8b929b;
+  --color-success-dim: rgba(139, 146, 155, 0.10);
+
+  /* Text */
+  --text-primary: #0d1117;
+  --text-secondary: #3c434c;
+  --text-tertiary: #626a74;
+  --text-muted: #8d949d;
+  /* Text/icons sitting on an accent or gradient-primary fill */
+  --text-on-accent: #ffffff;
+  /* Sweep-button hover: high-contrast neutral fill, opposite ink */
+  --sweep-fill: #0d1117;
+  --sweep-ink: #ffffff;
+
+  /* Elevation — bevel highlights and cast shade for the 3D nav bar */
+  --elev-highlight: rgba(255, 255, 255, 0.85);
+  --elev-gloss: rgba(255, 255, 255, 0.5);
+  --elev-shadow-soft: rgba(13, 17, 23, 0.14);
+  --elev-shadow-hard: rgba(13, 17, 23, 0.3);
+  --elev-rim: rgba(13, 17, 23, 0.12);
+
   /* Borders */
-  --border-color: rgba(148, 163, 184, 0.24);
-  --border-color-hover: rgba(37, 99, 235, 0.22);
-  --border-accent: rgba(37, 99, 235, 0.28);
-  
+  --border-color: rgba(13, 17, 23, 0.14);
+  --border-color-hover: rgba(29, 95, 208, 0.42);
+  --border-accent: rgba(29, 95, 208, 0.55);
+
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #2563eb, #14b8a6);
-  --gradient-bg: linear-gradient(180deg, #f8fafc 0%, #eef2f7 52%, #e2e8f0 100%);
-  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.94));
-  --gradient-accent: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(20, 184, 166, 0.06));
-  --gradient-hero: radial-gradient(ellipse at top, rgba(37, 99, 235, 0.12) 0%, transparent 60%);
-  
+  --gradient-primary: linear-gradient(135deg, #17457f, #2b74e6);
+  --gradient-bg: linear-gradient(180deg, #ffffff 0%, #f6f8fa 52%, #eef1f5 100%);
+  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 251, 0.94));
+  --gradient-accent: linear-gradient(135deg, rgba(29, 95, 208, 0.07), rgba(29, 95, 208, 0.02));
+  --gradient-hero: radial-gradient(ellipse at top, rgba(29, 95, 208, 0.12) 0%, transparent 60%);
+
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.1);
-  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
-  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.16);
-  --shadow-glow-danger: 0 0 20px rgba(239, 68, 68, 0.16);
-  
+  --shadow-sm: 0 1px 3px rgba(13, 17, 23, 0.10);
+  --shadow-md: 0 8px 24px rgba(13, 17, 23, 0.12);
+  --shadow-lg: 0 16px 40px rgba(13, 17, 23, 0.14);
+  --shadow-glow: 0 0 20px rgba(29, 95, 208, 0.28);
+  --shadow-glow-danger: 0 0 20px rgba(13, 17, 23, 0.30);
+
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
@@ -75,11 +89,16 @@
   --space-3xl: 64px;
   
   /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
+  /* Softened corners — every other surface stays square */
+  --radius-btn: 6px;      /* main buttons */
+  --radius-btn-sm: 4px;   /* language / small buttons */
+  --radius-surface: 6px;  /* upload zone, uploaded document cards */
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-full: 0;
   
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -154,8 +173,8 @@ body {
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 5px rgba(6, 182, 212, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.5); }
+  0%, 100% { box-shadow: 0 0 5px rgba(147, 147, 147, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(147, 147, 147, 0.5); }
 }
 
 @keyframes shimmer {
@@ -220,7 +239,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-on-accent);
   font-size: 20px;
   box-shadow: var(--shadow-glow);
 }
@@ -266,16 +285,50 @@ body {
   text-align: left;
 }
 
-.nav-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border-color: var(--border-color-hover);
+/* Hover — Skiper UI "Link004": a bar grows up from the bottom edge and the
+   label inverts against it. Same substitution as the sweep button: solid
+   accent fill instead of the original mix-blend-difference, which would
+   resolve to amber over blue. */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0;
+  background: var(--accent-primary);
+  pointer-events: none;
+  z-index: -1;
+  transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item:hover:not(:disabled)::before,
+.nav-item:focus-visible:not(:disabled)::before {
+  height: 100%;
+}
+
+.nav-item:hover:not(:disabled),
+.nav-item:focus-visible:not(:disabled) {
+  background: transparent;
+  color: var(--text-on-accent);
+  border-color: var(--accent-primary);
 }
 
 .nav-item.active {
   background: var(--accent-primary-dim);
   color: var(--accent-primary);
   border-color: var(--border-accent);
+}
+
+.nav-item:hover:not(:disabled) .nav-badge {
+  background: var(--text-on-accent);
+  color: var(--accent-primary);
 }
 
 .nav-item .nav-icon {
@@ -287,7 +340,7 @@ body {
 .nav-badge {
   margin-left: auto;
   background: var(--color-danger);
-  color: white;
+  color: var(--text-on-accent);
   font-size: 0.7rem;
   font-weight: 700;
   padding: 2px 8px;
@@ -371,7 +424,7 @@ body {
    ============================================================ */
 .upload-zone {
   border: 2px dashed var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-surface);
   padding: var(--space-3xl) var(--space-xl);
   text-align: center;
   cursor: pointer;
@@ -385,7 +438,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(139, 92, 246, 0.05));
+  background: linear-gradient(135deg, rgba(147, 147, 147, 0.05), rgba(113, 113, 113, 0.05));
   opacity: 0;
   transition: opacity var(--transition-base);
 }
@@ -459,7 +512,7 @@ body {
   gap: var(--space-md);
   padding: var(--space-md);
   background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-surface);
   border: 1px solid var(--border-color);
   animation: fadeInUp var(--transition-base) ease-out;
 }
@@ -585,15 +638,15 @@ body {
   top: var(--space-lg);
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: 0;
   border: 2px solid var(--bg-primary);
   z-index: 2;
 }
 
-.timeline-dot.lab_report { background: var(--color-info); box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
-.timeline-dot.prescription { background: var(--color-success); box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
-.timeline-dot.discharge_summary { background: var(--color-warning); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
-.timeline-dot.doctor_notes { background: var(--accent-secondary); box-shadow: 0 0 8px rgba(15, 118, 110, 0.28); }
+.timeline-dot.lab_report { background: var(--color-info); box-shadow: 0 0 8px rgba(123, 123, 123, 0.4); }
+.timeline-dot.prescription { background: var(--color-success); box-shadow: 0 0 8px rgba(155, 155, 155, 0.4); }
+.timeline-dot.discharge_summary { background: var(--color-warning); box-shadow: 0 0 8px rgba(166, 166, 166, 0.4); }
+.timeline-dot.doctor_notes { background: var(--accent-secondary); box-shadow: 0 0 8px rgba(96, 96, 96, 0.28); }
 .timeline-dot.unknown { background: var(--text-tertiary); }
 
 .timeline-card {
@@ -699,23 +752,23 @@ body {
 }
 
 .alert-card.critical {
-  border-color: rgba(239, 68, 68, 0.24);
-  background: linear-gradient(145deg, rgba(239, 68, 68, 0.06), var(--bg-card));
+  border-color: rgba(104, 104, 104, 0.24);
+  background: linear-gradient(145deg, rgba(104, 104, 104, 0.06), var(--bg-card));
 }
 
 .alert-card.major {
-  border-color: rgba(245, 158, 11, 0.24);
-  background: linear-gradient(145deg, rgba(245, 158, 11, 0.06), var(--bg-card));
+  border-color: rgba(166, 166, 166, 0.24);
+  background: linear-gradient(145deg, rgba(166, 166, 166, 0.06), var(--bg-card));
 }
 
 .alert-card.moderate {
-  border-color: rgba(245, 158, 11, 0.2);
-  background: linear-gradient(145deg, rgba(245, 158, 11, 0.05), var(--bg-card));
+  border-color: rgba(166, 166, 166, 0.2);
+  background: linear-gradient(145deg, rgba(166, 166, 166, 0.05), var(--bg-card));
 }
 
 .alert-card.minor {
-  border-color: rgba(37, 99, 235, 0.22);
-  background: linear-gradient(145deg, rgba(37, 99, 235, 0.05), var(--bg-card));
+  border-color: rgba(96, 96, 96, 0.22);
+  background: linear-gradient(145deg, rgba(96, 96, 96, 0.05), var(--bg-card));
 }
 
 .alert-header {
@@ -736,7 +789,7 @@ body {
 
 .alert-severity.critical { background: var(--color-danger-dim); color: var(--color-danger); }
 .alert-severity.major { background: var(--color-warning-dim); color: var(--color-warning); }
-.alert-severity.moderate { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.alert-severity.moderate { background: rgba(166, 166, 166, 0.12); color: #848484; }
 .alert-severity.minor { background: var(--color-info-dim); color: var(--color-info); }
 
 .alert-type {
@@ -853,8 +906,8 @@ body {
 }
 
 .trend-explanation.worrying {
-  border-color: rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(166, 166, 166, 0.3);
+  background: rgba(166, 166, 166, 0.05);
 }
 
 /* ============================================================
@@ -916,7 +969,7 @@ body {
 
 .chat-avatar.ai {
   background: var(--gradient-primary);
-  color: white;
+  color: var(--text-on-accent);
 }
 
 .chat-avatar.user {
@@ -1039,10 +1092,10 @@ body {
 .chat-send-btn {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-btn);
   background: var(--gradient-primary);
   border: none;
-  color: white;
+  color: var(--text-on-accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1100,7 +1153,7 @@ body {
   justify-content: center;
   gap: var(--space-sm);
   padding: var(--space-md) var(--space-xl);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-btn);
   font-family: var(--font-sans);
   font-size: 0.9rem;
   font-weight: 600;
@@ -1111,7 +1164,7 @@ body {
 
 .btn-primary {
   background: var(--gradient-primary);
-  color: white;
+  color: var(--text-on-accent);
   border: none;
 }
 
@@ -1141,11 +1194,11 @@ body {
 .btn-danger {
   background: var(--color-danger-dim);
   color: var(--color-danger);
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(104, 104, 104, 0.3);
 }
 
 .btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(104, 104, 104, 0.2);
   box-shadow: var(--shadow-glow-danger);
 }
 
@@ -1153,8 +1206,8 @@ body {
    Medical Disclaimer
    ============================================================ */
 .disclaimer-banner {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(239, 68, 68, 0.05));
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: linear-gradient(135deg, rgba(166, 166, 166, 0.08), rgba(104, 104, 104, 0.05));
+  border: 1px solid rgba(166, 166, 166, 0.2);
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
   display: flex;
@@ -1187,8 +1240,8 @@ body {
   inset: 0;
   min-height: 100vh;
   width: 100vw;
-  background: #eef3f9;
-  background: linear-gradient(135deg, #eef4f9 0%, #e2eaf5 100%);
+  background: #f2f2f2;
+  background: linear-gradient(135deg, #f3f3f3 0%, #e9e9e9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1200,13 +1253,13 @@ body {
 
 .disclaimer-card {
   background: #ffffff;
-  border-radius: 28px;
+  border-radius: 0;
   max-width: 940px;
   width: 100%;
   box-shadow: 
-    0 24px 70px -10px rgba(30, 41, 59, 0.12),
+    0 24px 70px -10px rgba(40, 40, 40, 0.12),
     0 8px 24px -4px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid rgba(231, 231, 231, 0.8);
   padding: 48px 56px;
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
@@ -1224,10 +1277,10 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  border-radius: 9999px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+  border-radius: 0;
+  background: #f4f4f4;
+  border: 1px solid #e7e7e7;
+  color: #535353;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -1235,8 +1288,8 @@ body {
 }
 
 .disclaimer-lang-pill:hover {
-  background: #e2e8f0;
-  color: #1e293b;
+  background: #e7e7e7;
+  color: #282828;
 }
 
 .disclaimer-card-left {
@@ -1248,7 +1301,7 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #94a3b8;
+  color: #a1a1a1;
   text-transform: uppercase;
   margin-bottom: 6px;
 }
@@ -1256,7 +1309,7 @@ body {
 .disclaimer-title {
   font-size: 2rem;
   font-weight: 800;
-  color: #1e293b;
+  color: #282828;
   margin-bottom: 20px;
   letter-spacing: -0.02em;
   line-height: 1.2;
@@ -1265,25 +1318,25 @@ body {
 .disclaimer-body-text {
   font-size: 0.88rem;
   line-height: 1.65;
-  color: #475569;
+  color: #535353;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 .disclaimer-body-text strong {
-  color: #1e293b;
+  color: #282828;
   font-weight: 600;
 }
 
 .disclaimer-risk-box {
   margin-top: 16px;
   padding: 14px 18px;
-  background: #f8fafc;
-  border-left: 3px solid #3b82f6;
-  border-radius: 8px;
+  background: #fafafa;
+  border-left: 3px solid var(--accent-primary);
+  border-radius: 0;
   font-size: 0.82rem;
-  color: #475569;
+  color: #535353;
 }
 
 .disclaimer-risk-box .risk-header {
@@ -1291,7 +1344,7 @@ body {
   align-items: center;
   gap: 6px;
   font-weight: 700;
-  color: #1e293b;
+  color: #282828;
   margin-bottom: 6px;
 }
 
@@ -1311,34 +1364,34 @@ body {
 .btn-decline {
   background: transparent;
   border: none;
-  color: #2563eb;
+  color: #606060;
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
   cursor: pointer;
   padding: 10px 16px;
-  border-radius: 9999px;
+  border-radius: var(--radius-btn-sm);
   transition: all 0.2s ease;
 }
 
 .btn-decline:hover {
-  background: rgba(37, 99, 235, 0.06);
-  color: #1d4ed8;
+  background: rgba(96, 96, 96, 0.06);
+  color: #4e4e4e;
 }
 
 .btn-accept {
-  background: #0066ff;
-  color: #ffffff;
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius-btn);
   padding: 14px 36px;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 102, 255, 0.32);
+  box-shadow: 0 8px 24px rgba(29, 95, 208, 0.32);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
@@ -1347,17 +1400,17 @@ body {
 }
 
 .btn-accept:hover {
-  background: #0052cc;
-  box-shadow: 0 12px 28px rgba(0, 102, 255, 0.42);
+  background: var(--accent-secondary);
+  box-shadow: 0 12px 28px rgba(29, 95, 208, 0.42);
   transform: translateY(-2px);
 }
 
 .decline-notice-box {
   margin-top: 24px;
   padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 12px;
+  background: #f5f5f5;
+  border: 1px solid #d5d5d5;
+  border-radius: 0;
 }
 
 .disclaimer-card-right {
@@ -1384,7 +1437,7 @@ body {
   bottom: 0px;
   width: 220px;
   height: 36px;
-  background: radial-gradient(ellipse at center, rgba(148, 163, 184, 0.35) 0%, rgba(148, 163, 184, 0) 70%);
+  background: radial-gradient(ellipse at center, rgba(161, 161, 161, 0.35) 0%, rgba(161, 161, 161, 0) 70%);
   border-radius: 50%;
   z-index: 1;
 }
@@ -1563,7 +1616,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-on-accent);
   font-size: 32px;
   box-shadow: var(--shadow-glow);
   animation: float 3s ease-in-out infinite;
@@ -1666,7 +1719,7 @@ body {
   z-index: 200;
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-btn-sm);
   background: var(--bg-glass-strong);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
@@ -1763,29 +1816,29 @@ body {
 }
 
 .risk-banner.critical {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.02));
-  border-color: rgba(239, 68, 68, 0.24);
+  background: linear-gradient(135deg, rgba(104, 104, 104, 0.08), rgba(104, 104, 104, 0.02));
+  border-color: rgba(104, 104, 104, 0.24);
 }
 
 .risk-banner.major {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
-  border-color: rgba(245, 158, 11, 0.24);
+  background: linear-gradient(135deg, rgba(166, 166, 166, 0.08), rgba(166, 166, 166, 0.02));
+  border-color: rgba(166, 166, 166, 0.24);
 }
 
 .risk-banner.moderate {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(245, 158, 11, 0.015));
-  border-color: rgba(245, 158, 11, 0.2);
+  background: linear-gradient(135deg, rgba(166, 166, 166, 0.06), rgba(166, 166, 166, 0.015));
+  border-color: rgba(166, 166, 166, 0.2);
 }
 
 .risk-banner.minor, .risk-banner.info {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(37, 99, 235, 0.015));
-  border-color: rgba(37, 99, 235, 0.22);
+  background: linear-gradient(135deg, rgba(96, 96, 96, 0.06), rgba(96, 96, 96, 0.015));
+  border-color: rgba(96, 96, 96, 0.22);
 }
 
 .risk-banner-icon {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1794,7 +1847,7 @@ body {
 
 .risk-banner.critical .risk-banner-icon { background: var(--color-danger-dim); color: var(--color-danger); }
 .risk-banner.major .risk-banner-icon { background: var(--color-warning-dim); color: var(--color-warning); }
-.risk-banner.moderate .risk-banner-icon { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.risk-banner.moderate .risk-banner-icon { background: rgba(166, 166, 166, 0.12); color: #848484; }
 .risk-banner.minor .risk-banner-icon,
 .risk-banner.info .risk-banner-icon { background: var(--color-success-dim); color: var(--color-success); }
 
@@ -1830,4 +1883,767 @@ body {
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ============================================================
+   Theme — Dark Palette & Theme Toggle
+   ============================================================ */
+
+/* Easing shared by the view-transition reveals */
+:root {
+  --expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --expo-in: cubic-bezier(0.7, 0, 0.84, 0);
+
+  /* Theme reveal timing — slow enough to read as a sweep, not a snap.
+     --expo-out jumps ~90% of the way in the first fifth of its duration,
+     so the wave uses a gentler curve that eases in and settles out. */
+  --theme-wave-duration: 1.25s;
+  --theme-wave-ease: cubic-bezier(0.45, 0.05, 0.25, 1);
+
+}
+
+:root[data-theme="dark"] {
+  /* Backgrounds — charcoal rather than pure black, so panels read as layers */
+  --bg-primary: #101318;
+  --bg-secondary: #171b22;
+  --bg-tertiary: #232933;
+  --bg-card: rgba(31, 37, 46, 0.94);
+  --bg-card-hover: rgba(42, 49, 60, 1);
+  --bg-glass: rgba(23, 27, 34, 0.74);
+  --bg-glass-strong: rgba(18, 22, 28, 0.92);
+
+  /* Accents — lifted blue keeps contrast against the charcoal base */
+  --accent-primary: #5c9dff;
+  --accent-primary-dim: rgba(92, 157, 255, 0.16);
+  --accent-secondary: #8fbcff;
+  --accent-secondary-dim: rgba(143, 188, 255, 0.16);
+  --accent-teal: #7aa9f0;
+  --accent-teal-dim: rgba(122, 169, 240, 0.16);
+
+  /* Semantic — severity mirrors the light ramp, brightest = most severe */
+  --color-danger: #ffffff;
+  --color-danger-dim: rgba(255, 255, 255, 0.16);
+  --color-warning: #c3cbd6;
+  --color-warning-dim: rgba(195, 203, 214, 0.14);
+  --color-info: #5c9dff;
+  --color-info-dim: rgba(92, 157, 255, 0.16);
+  --color-success: #7d868f;
+  --color-success-dim: rgba(125, 134, 143, 0.14);
+
+  /* Text — plenty of true white so the theme is not a black void */
+  --text-primary: #ffffff;
+  --text-secondary: #d3d9e2;
+  --text-tertiary: #a5aeba;
+  --text-muted: #79828e;
+  --text-on-accent: #0d1117;
+  --sweep-fill: #ffffff;
+  --sweep-ink: #0d1117;
+
+  /* Elevation — on dark, the bevel is a faint white edge and shade goes deep */
+  --elev-highlight: rgba(255, 255, 255, 0.14);
+  --elev-gloss: rgba(255, 255, 255, 0.32);
+  --elev-shadow-soft: rgba(0, 0, 0, 0.55);
+  --elev-shadow-hard: rgba(0, 0, 0, 0.85);
+  --elev-rim: rgba(0, 0, 0, 0.65);
+
+  /* Borders — visible enough to separate the layered surfaces */
+  --border-color: rgba(255, 255, 255, 0.16);
+  --border-color-hover: rgba(92, 157, 255, 0.55);
+  --border-accent: rgba(92, 157, 255, 0.65);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #3d7fe0, #7ab4ff);
+  --gradient-bg: linear-gradient(180deg, #101318 0%, #151a21 52%, #1b212a 100%);
+  --gradient-card: linear-gradient(145deg, rgba(38, 45, 56, 0.96), rgba(26, 31, 39, 0.94));
+  --gradient-accent: linear-gradient(135deg, rgba(92, 157, 255, 0.12), rgba(92, 157, 255, 0.04));
+  --gradient-hero: radial-gradient(ellipse at top, rgba(92, 157, 255, 0.16) 0%, transparent 60%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 22px rgba(92, 157, 255, 0.32);
+  --shadow-glow-danger: 0 0 22px rgba(255, 255, 255, 0.24);
+
+
+  color-scheme: dark;
+}
+
+/* Surfaces that hardcoded a light value */
+:root[data-theme="dark"] .disclaimer-card {
+  background: var(--bg-card-hover);
+  border-color: var(--border-color);
+}
+
+/* ------------------------------------------------------------
+   Theme Toggle Button
+   ------------------------------------------------------------ */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-btn-sm);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-base),
+    border-color var(--transition-base), background var(--transition-base);
+}
+
+.theme-toggle:hover {
+  border-color: var(--border-color-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+.theme-toggle:active {
+  transform: scale(0.94);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: 68%;
+  height: 68%;
+  overflow: visible;
+  color: var(--text-primary);
+}
+
+/* Sun/moon morph parts. transform-box: view-box means transform-origin is in
+   viewBox units, so 16px 16px is the orb's centre. */
+.theme-toggle-cut,
+.theme-toggle-orb,
+.theme-toggle-rays {
+  transform-origin: 16px 16px;
+  transition: transform var(--theme-wave-duration) var(--theme-wave-ease),
+    opacity var(--theme-wave-duration) var(--theme-wave-ease);
+}
+
+/* ------------------------------------------------------------
+   View Transitions
+   ------------------------------------------------------------ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  /* The generated per-toggle stylesheet drives these; keep blending clean */
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+
+  .theme-toggle-cut,
+  .theme-toggle-orb,
+  .theme-toggle-rays {
+    transition: none;
+  }
+}
+
+
+/* ============================================================
+   Sweep Button — Skiper UI "Link005" hover treatment
+   A bar wipes in from the left and the label inverts against it.
+   The original difference blend is dropped on purpose: white
+   difference-blended over the blue gradient resolves to amber
+   (#d48b19), which is off-palette. The fill is a flat neutral —
+   near-black on light, white on dark — so the hover can only ever
+   be black, white or blue.
+   ============================================================ */
+.sweep-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl);
+  border: none;
+  border-radius: var(--radius-btn);
+  background: var(--gradient-primary);
+  color: var(--text-on-accent);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast),
+    color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sweep-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Neutral fill: near-black on light, white on dark. No blend mode. */
+  background: var(--sweep-fill);
+  pointer-events: none;
+  z-index: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sweep-btn:hover:not(:disabled)::before,
+.sweep-btn:focus-visible:not(:disabled)::before {
+  transform: scaleX(1);
+}
+
+.sweep-btn:hover:not(:disabled) {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.sweep-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sweep-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.sweep-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Label and icons ride above the sweeping fill and recolour against it */
+.sweep-btn > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sweep-btn:hover:not(:disabled),
+.sweep-btn:focus-visible:not(:disabled) {
+  color: var(--sweep-ink);
+}
+
+.sweep-btn-label {
+  white-space: nowrap;
+}
+
+.sweep-btn-arrow {
+  width: 0.55em;
+  height: 0.55em;
+  margin-left: -0.3em;
+  transform: translateX(-4px) rotate(45deg);
+  opacity: 0;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sweep-btn:hover:not(:disabled) .sweep-btn-arrow,
+.sweep-btn:focus-visible:not(:disabled) .sweep-btn-arrow {
+  transform: translateX(0) rotate(45deg);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep-btn,
+  .sweep-btn::before,
+  .sweep-btn-arrow {
+    transition: none;
+  }
+}
+
+
+/* ============================================================
+   Mobile Bottom Tab Bar
+   The sidebar tabs move to a fixed bar at the bottom under 1024px,
+   which is where the sidebar becomes an off-canvas drawer.
+   ============================================================ */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 150;
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--border-color);
+  /* Clear the iOS home indicator */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* The assistant button protrudes above the bar */
+  overflow: visible;
+}
+
+.bottom-nav-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  /* Comfortable touch target */
+  min-height: 56px;
+  transition: color var(--transition-fast);
+}
+
+.bottom-nav-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bottom-nav-item.active {
+  color: var(--accent-primary);
+}
+
+/* Active marker sits on the top edge, mirroring the sidebar's fill direction */
+.bottom-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 2px;
+  background: var(--accent-primary);
+}
+
+.bottom-nav-item:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.bottom-nav-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-btn-sm);
+  background: var(--color-danger);
+  color: var(--text-on-accent);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.bottom-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Responsive — tablet and phone
+   ============================================================ */
+@media (max-width: 1024px) {
+  .bottom-nav {
+    display: flex;
+  }
+
+  /* Tabs live in the bottom bar on mobile, so drop them from the drawer */
+  .sidebar-nav {
+    display: none;
+  }
+
+  /* Keep content clear of the fixed bar */
+  .main-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Title and action stack instead of colliding */
+  .glass-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .glass-card-header .sweep-btn,
+  .glass-card-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .upload-zone {
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  /* Filename + size need room to wrap rather than push the row wide */
+  .file-item {
+    flex-wrap: wrap;
+  }
+
+  .file-item-info {
+    min-width: 0;
+    flex: 1 1 60%;
+  }
+
+  .file-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chat-messages {
+    padding: var(--space-md);
+  }
+
+  .chat-bubble {
+    max-width: 88%;
+  }
+
+  .bottom-nav-label {
+    font-size: 0.62rem;
+  }
+}
+
+@media (max-width: 400px) {
+  /* Four-plus tabs get tight; icons alone stay legible */
+  .bottom-nav-label {
+    display: none;
+  }
+
+  .bottom-nav-item {
+    min-height: 52px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Bottom bar — raised AI assistant in the centre slot
+   ------------------------------------------------------------ */
+.bottom-nav-item.is-assistant {
+  /* Keep the same flex share so the other four stay evenly spaced */
+  justify-content: flex-end;
+}
+
+.bottom-nav-item.is-assistant .bottom-nav-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin-top: -30px;
+  margin-bottom: 2px;
+  background: var(--gradient-primary);
+  color: var(--text-on-accent);
+  /* Ring punches the button out of the bar, as in a FAB */
+  border: 4px solid var(--bg-primary);
+  box-shadow: var(--shadow-glow);
+  transition: transform var(--transition-fast), box-shadow var(--transition-base);
+}
+
+.bottom-nav-item.is-assistant:hover:not(:disabled) .bottom-nav-icon {
+  transform: translateY(-2px);
+}
+
+.bottom-nav-item.is-assistant:active:not(:disabled) .bottom-nav-icon {
+  transform: translateY(0) scale(0.95);
+}
+
+.bottom-nav-item.is-assistant.active {
+  color: var(--accent-primary);
+}
+
+.bottom-nav-item.is-assistant.active .bottom-nav-icon {
+  box-shadow: var(--shadow-glow), 0 0 0 2px var(--accent-primary);
+}
+
+/* The centre slot has no top underline — the raised button is the marker */
+.bottom-nav-item.is-assistant.active::before {
+  display: none;
+}
+
+.bottom-nav-item.is-assistant .bottom-nav-badge {
+  top: -2px;
+  right: -2px;
+}
+
+/* Label stays visible for the assistant even when the others collapse */
+@media (max-width: 400px) {
+  .bottom-nav-item.is-assistant .bottom-nav-label {
+    display: block;
+  }
+
+  .bottom-nav-item.is-assistant .bottom-nav-icon {
+    width: 50px;
+    height: 50px;
+    margin-top: -26px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Animated AI assistant mark
+   ------------------------------------------------------------ */
+.assistant-orb {
+  overflow: visible;
+}
+
+/* Core breathes slowly */
+.assistant-orb-core {
+  transform-origin: 16px 16px;
+  animation: orb-breathe 2.8s ease-in-out infinite;
+}
+
+/* Satellites rotate as a group... */
+.assistant-orb-satellites {
+  transform-origin: 16px 16px;
+  animation: orb-orbit 9s linear infinite;
+}
+
+/* ...while each dot pulses out of phase, so it reads as thinking */
+.assistant-orb-dot {
+  transform-origin: 16px 16px;
+  animation: orb-twinkle 2.1s ease-in-out infinite;
+}
+
+.assistant-orb-dot.dot-2 { animation-delay: 0.7s; }
+.assistant-orb-dot.dot-3 { animation-delay: 1.4s; }
+
+@keyframes orb-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.12); opacity: 0.88; }
+}
+
+@keyframes orb-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orb-twinkle {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+
+/* Halo pulsing off the raised button, drawing the eye to the assistant */
+.bottom-nav-item.is-assistant .bottom-nav-icon::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-primary);
+  opacity: 0;
+  animation: orb-halo 2.8s ease-out infinite;
+  pointer-events: none;
+}
+
+.bottom-nav-item.is-assistant:disabled .bottom-nav-icon::after {
+  animation: none;
+}
+
+@keyframes orb-halo {
+  0%   { transform: scale(0.9); opacity: 0.5; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-orb-core,
+  .assistant-orb-satellites,
+  .assistant-orb-dot,
+  .bottom-nav-item.is-assistant .bottom-nav-icon::after {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   AI assistant panel — mobile
+   ------------------------------------------------------------ */
+@media (max-width: 1024px) {
+  /* dvh tracks the collapsing browser chrome that 100vh ignores, so the
+     input row does not end up under the address bar. */
+  .chat-container {
+    height: calc(100dvh - 180px - 72px - env(safe-area-inset-bottom, 0px));
+  }
+
+  /* The input row is the anchor; keep it reachable while messages scroll */
+  .chat-input-area {
+    position: sticky;
+    bottom: 0;
+    padding: var(--space-sm) var(--space-md);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Edge-to-edge reads better than a floating card on a phone.
+     --space-md matches .main-content's padding at this width. */
+  .chat-container {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    margin-left: calc(-1 * var(--space-md));
+    margin-right: calc(-1 * var(--space-md));
+  }
+
+  .chat-message {
+    gap: var(--space-sm);
+  }
+
+  .chat-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .chat-bubble {
+    max-width: calc(100% - 40px);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  /* Suggestion chips scroll horizontally rather than stacking tall */
+  .chat-suggestions {
+    margin-bottom: var(--space-sm);
+    gap: 6px;
+    /* Bleed to the screen edges so the row reads as scrollable */
+    margin-left: calc(-1 * var(--space-md));
+    margin-right: calc(-1 * var(--space-md));
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .chat-suggestions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chat-suggestion {
+    scroll-snap-align: start;
+    font-size: 0.78rem;
+    padding: 7px 12px;
+  }
+
+  .chat-input {
+    padding: var(--space-sm) var(--space-md);
+    /* 16px keeps iOS Safari from zooming the viewport on focus */
+    font-size: 16px;
+  }
+
+  .chat-send-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .chat-bubble-meta {
+    gap: 6px;
+    font-size: 0.72rem;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Bottom nav — 3D treatment
+   A raised slab: gradient face, bevelled top edge, shade cast up
+   onto the content, and tabs that press into the surface.
+   ------------------------------------------------------------ */
+.bottom-nav {
+  background: linear-gradient(
+    180deg,
+    var(--bg-secondary) 0%,
+    var(--bg-primary) 55%,
+    var(--bg-tertiary) 100%
+  );
+  border-top: 1px solid var(--elev-rim);
+  backdrop-filter: none;
+  box-shadow:
+    /* cast upward onto the page content */
+    0 -12px 30px -6px var(--elev-shadow-soft),
+    0 -3px 8px -3px var(--elev-shadow-soft),
+    /* bevelled top lip catching the light */
+    inset 0 1px 0 var(--elev-highlight),
+    /* surface curls away at the bottom */
+    inset 0 -10px 14px -10px var(--elev-shadow-hard);
+}
+
+/* Idle tabs sit proud of the slab */
+.bottom-nav-item {
+  border-radius: var(--radius-btn-sm);
+  transition: color var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+/* Active tab is pressed into the surface */
+.bottom-nav-item.active:not(.is-assistant) {
+  background: linear-gradient(180deg, var(--elev-rim) 0%, transparent 70%);
+  box-shadow:
+    inset 0 2px 5px -2px var(--elev-shadow-hard),
+    inset 0 -1px 0 var(--elev-highlight);
+}
+
+.bottom-nav-item:active:not(:disabled):not(.is-assistant) {
+  transform: translateY(1px);
+}
+
+/* The assistant reads as a physical sphere: gloss above, shade below,
+   and a contact shadow on the slab beneath it. */
+.bottom-nav-item.is-assistant .bottom-nav-icon {
+  background:
+    radial-gradient(circle at 34% 26%, var(--elev-gloss) 0%, transparent 52%),
+    var(--gradient-primary);
+  border-color: var(--bg-primary);
+  box-shadow:
+    0 8px 16px -4px var(--elev-shadow-hard),
+    0 3px 6px -2px var(--elev-shadow-soft),
+    var(--shadow-glow),
+    inset 0 2px 3px var(--elev-gloss),
+    inset 0 -4px 7px -2px rgba(0, 0, 0, 0.35);
+}
+
+/* Pressing it sinks the sphere toward the slab */
+.bottom-nav-item.is-assistant:active:not(:disabled) .bottom-nav-icon {
+  transform: translateY(3px) scale(0.97);
+  box-shadow:
+    0 3px 7px -3px var(--elev-shadow-hard),
+    inset 0 2px 3px var(--elev-gloss),
+    inset 0 -2px 5px -2px rgba(0, 0, 0, 0.35);
+}
+
+.bottom-nav-item.is-assistant:disabled .bottom-nav-icon {
+  box-shadow:
+    0 3px 8px -4px var(--elev-shadow-soft),
+    inset 0 -3px 6px -2px rgba(0, 0, 0, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav-item,
+  .bottom-nav-item.is-assistant .bottom-nav-icon {
+    transition: none;
+  }
 }
