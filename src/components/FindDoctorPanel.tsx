@@ -15,6 +15,8 @@ import {
   ExternalLink,
   LocateFixed,
   Compass,
+  Landmark,
+  Building2,
 } from 'lucide-react';
 import type { DoctorResult } from '@/types/medical';
 import { useI18n } from '@/lib/i18n';
@@ -119,6 +121,7 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
       const payload: Record<string, unknown> = {
         specialty,
         availability,
+        urgencyHint,
       };
 
       if (typeof lat === 'number' && typeof lon === 'number') {
@@ -702,8 +705,74 @@ function DoctorCard({ doc, index, specialty }: { doc: DoctorResult; index: numbe
           </span>
         </div>
 
-        {/* Specialty tag & Ratings */}
+        {/* Specialty tag & Ratings & Referral Badges */}
         <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+          {doc.isEmergencyRecommended && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(239, 68, 68, 0.15)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                fontSize: '0.70rem',
+                fontWeight: 700,
+                letterSpacing: '0.01em',
+              }}
+            >
+              <AlertTriangle size={11} />
+              24/7 Emergency & Trauma Unit
+            </span>
+          )}
+
+          {doc.isTertiary && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(99, 102, 241, 0.15)',
+                color: '#818cf8',
+                border: '1px solid rgba(99, 102, 241, 0.35)',
+                fontSize: '0.70rem',
+                fontWeight: 700,
+                letterSpacing: '0.01em',
+              }}
+            >
+              <Landmark size={11} />
+              {doc.facilityType === 'teaching'
+                ? 'Teaching Hospital'
+                : doc.facilityType === 'tertiary'
+                ? 'National Tertiary Center'
+                : 'Tertiary Hospital'}
+            </span>
+          )}
+
+          {doc.isReferralCenter && doc.distanceKm > 25 && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(249, 115, 22, 0.15)',
+                color: '#fb923c',
+                border: '1px solid rgba(249, 115, 22, 0.35)',
+                fontSize: '0.70rem',
+                fontWeight: 700,
+              }}
+            >
+              <Building2 size={11} />
+              Regional Specialist Referral
+            </span>
+          )}
+
           <span
             style={{
               display: 'inline-flex',

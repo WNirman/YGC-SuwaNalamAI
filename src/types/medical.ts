@@ -1,4 +1,4 @@
-﻿export type AlertSeverity = 'critical' | 'major' | 'moderate' | 'minor' | 'info';
+export type AlertSeverity = 'critical' | 'major' | 'moderate' | 'minor' | 'info';
 
 export type UrgencyHint = 'immediate' | 'this_week' | 'routine';
 
@@ -160,6 +160,10 @@ export interface DoctorResult {
   lat: number;
   lon: number;
   dataSource: 'google' | 'osm';
+  isTertiary?: boolean;      // National, Teaching, or Provincial Referral Hospital
+  isReferralCenter?: boolean;// Marked as a guaranteed regional referral center (>25km or dedicated)
+  isEmergencyRecommended?: boolean; // Pinned / recommended for 24/7 acute emergency & trauma
+  facilityType?: 'tertiary' | 'teaching' | 'general' | 'clinic';
 }
 
 /** Response from /api/find-doctors */
