@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // MediScan AI — AI Client (Groq primary, OpenAI secondary, Gemini failover)
 // Uses OpenAI-compatible SDK with Groq's endpoint + automatic Gemini failover
 // ============================================================
