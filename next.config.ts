@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow large file uploads for medical documents
-  serverExternalPackages: ['pdf-parse'],
+  // Keep pdf-parse and its native/worker dependencies external for Vercel serverless
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist', '@napi-rs/canvas'],
   turbopack: {
     root: process.cwd(),
   },

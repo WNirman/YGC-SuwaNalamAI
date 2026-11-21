@@ -32,15 +32,15 @@ function getGeminiClient() {
   return new GoogleGenAI({
     apiKey,
     httpOptions: {
-      timeout: 40_000,
+      timeout: 25_000,
     },
   });
 }
 
 const GEMINI_MODELS = Array.from(
   new Set([
-    process.env.GEMINI_MODEL || 'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
+    process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
     'gemini-3.8-flash',
   ])
 );

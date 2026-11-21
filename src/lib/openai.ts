@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // MediScan AI — AI Client (Groq primary, OpenAI secondary, Gemini failover)
 // Uses OpenAI-compatible SDK with Groq's endpoint + automatic Gemini failover
 // ============================================================
@@ -52,7 +52,7 @@ function getVisionClient(): ModelClient {
       client: new OpenAI({
         apiKey: groqKey,
         baseURL: 'https://api.groq.com/openai/v1',
-        timeout: 25_000,
+        timeout: 20_000,
         maxRetries: 0,
       }),
       model: process.env.GROQ_VISION_MODEL || 'qwen/qwen3.8-27b',
@@ -64,7 +64,7 @@ function getVisionClient(): ModelClient {
     return {
       client: new OpenAI({
         apiKey: openaiKey,
-        timeout: 25_000,
+        timeout: 20_000,
         maxRetries: 0,
       }),
       model: process.env.OPENAI_VISION_MODEL || 'gpt-6.1-terra',
@@ -86,7 +86,7 @@ function getTextClient(): ModelClient {
       client: new OpenAI({
         apiKey: groqKey,
         baseURL: 'https://api.groq.com/openai/v1',
-        timeout: 25_000,
+        timeout: 20_000,
         maxRetries: 0,
       }),
       model: process.env.GROQ_TEXT_MODEL || 'openai/gpt-oss-120b',
@@ -98,7 +98,7 @@ function getTextClient(): ModelClient {
     return {
       client: new OpenAI({
         apiKey: openaiKey,
-        timeout: 25_000,
+        timeout: 20_000,
         maxRetries: 0,
       }),
       model: process.env.OPENAI_TEXT_MODEL || 'gpt-6-luna',
@@ -319,6 +319,12 @@ export async function extractDocumentData(
   language: string = 'en',
   extractedPdfText?: string
 ): Promise<ExtractedData> {
+  // For PDFs, prefer Gemini natively whenever GEMINI_API_KEY is available (handles both
+  // text and scanned PDFs without needing native @napi-rs/canvas bindings on Vercel).
+  if (mimeType === 'application/pdf' && hasGeminiKey() && !extractedPdfText?.trim()) {
+    return geminiClient.extractDocumentData(fileBuffer, mimeType, fileName, language);
+  }
+
   const langPrompt = getLanguageInstruction(language);
 
   return withProviderFailover(

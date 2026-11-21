@@ -94,6 +94,27 @@ const SEVERITY_RANK: Record<string, number> = {
   info: 0,
 };
 
+async function safeParseJson<T>(res: Response, stepLabel: string): Promise<T> {
+  const contentType = res.headers.get('content-type') || '';
+  const text = await res.text();
+  if (!contentType.includes('application/json')) {
+    if (res.status === 504) {
+      throw new Error(`${stepLabel} timed out on the server (HTTP 504). Please try again.`);
+    }
+    if (res.status === 413) {
+      throw new Error(`${stepLabel} failed: file payload is too large for the server (HTTP 413).`);
+    }
+    throw new Error(
+      `${stepLabel} failed with server error (HTTP ${res.status}). Please check Vercel function logs and environment variables.`
+    );
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`${stepLabel} returned an invalid JSON response (HTTP ${res.status}).`);
+  }
+}
+
 function buildSuggestedQuestions(
   docs: ExtractedData[],
   language: Language
@@ -237,7 +258,11 @@ export default function Dashboard() {
         method: 'POST',
         body: formData,
       });
-      const uploadData = await uploadRes.json();
+      const uploadData = await safeParseJson<{
+        success: boolean;
+        files?: unknown[];
+        error?: string;
+      }>(uploadRes, 'File upload');
 
       if (!uploadData.success) {
         throw new Error(uploadData.error || 'Upload failed');
@@ -253,7 +278,14 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files: uploadData.files, language }),
       });
-      const analyzeData = await analyzeRes.json();
+      const analyzeData = await safeParseJson<{
+        success: boolean;
+        documents: ExtractedData[];
+        timeline: TimelineEvent[];
+        patient: PatientInfo;
+        error?: string;
+        details?: string[];
+      }>(analyzeRes, 'Document analysis');
 
       if (!analyzeData.success) {
         throw new Error(analyzeData.details?.[0] || analyzeData.error || 'Analysis failed');
@@ -297,7 +329,13 @@ export default function Dashboard() {
             language,
           }),
         });
-        const crossCheckData = await crossCheckRes.json();
+        const crossCheckData = await safeParseJson<{
+          success: boolean;
+          alerts?: Alert[];
+          overallRiskLevel?: AlertSeverity;
+          summary?: string;
+          error?: string;
+        }>(crossCheckRes, 'Prescription cross-check');
 
         if (crossCheckData.success) {
           setAlerts(crossCheckData.alerts || []);
@@ -328,7 +366,12 @@ export default function Dashboard() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ labData, language }),
         });
-        const trendsData = await trendsRes.json();
+        const trendsData = await safeParseJson<{
+          success: boolean;
+          trends?: LabTrend[];
+          summary?: string;
+          error?: string;
+        }>(trendsRes, 'Lab trends analysis');
 
         if (trendsData.success) {
           setTrends(trendsData.trends || []);
@@ -431,10 +474,15 @@ export default function Dashboard() {
           language,
         }),
       });
-      const data = await res.json();
+      const data = await safeParseJson<{
+        success: boolean;
+        message?: ChatMessage;
+        suggestedQuestions?: SuggestedQuestion[];
+        error?: string;
+      }>(res, 'Chat');
 
-      if (data.success) {
-        setChatMessages((prev) => [...prev, data.message]);
+      if (data.success && data.message) {
+        setChatMessages((prev) => [...prev, data.message!]);
         if (data.suggestedQuestions) {
           setSuggestedQuestions(data.suggestedQuestions);
         }
@@ -452,13 +500,14 @@ export default function Dashboard() {
           },
         ]);
       }
-    } catch {
+    } catch (err) {
+      const errText = err instanceof Error ? err.message : 'An error occurred. Please try again.';
       setChatMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'An error occurred. Please try again.',
+          content: errText,
           timestamp: new Date().toISOString(),
           confidenceScore: 0,
           confidenceLevel: 'low',

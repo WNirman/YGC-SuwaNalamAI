@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { extractDocumentData } from '@/lib/openai';
-import { extractPdfText } from '@/lib/pdf';
 import type { ExtractedData, TimelineEvent } from '@/types/medical';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,12 +52,16 @@ export async function POST(request: NextRequest) {
           throw new Error('File content is missing');
         }
 
+        // Only lazily load pdf-parse when handling a PDF without GEMINI_API_KEY
+        // (When GEMINI_API_KEY is set, Gemini processes both text & scanned PDFs natively
+        // without requiring native @napi-rs/canvas bindings on Vercel serverless.)
         let pdfText: string | undefined;
-        if (file.fileType === 'application/pdf') {
+        if (file.fileType === 'application/pdf' && !process.env.GEMINI_API_KEY) {
           try {
+            const { extractPdfText } = await import('@/lib/pdf');
             pdfText = await extractPdfText(fileBuffer);
           } catch (pdfErr) {
-            console.warn(`pdf-parse failed for ${file.fileName}, continuing with fallback:`, pdfErr);
+            console.warn(`pdf-parse failed for ${file.fileName}:`, pdfErr);
           }
         }
 

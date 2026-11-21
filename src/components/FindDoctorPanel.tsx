@@ -140,6 +140,13 @@ export function FindDoctorPanel({ specialty, urgencyHint, context }: FindDoctorP
         body: JSON.stringify(payload),
       });
 
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        setError(`${t('findDoctor.errorService')} (HTTP ${res.status})`);
+        setPanelState('form');
+        return;
+      }
+
       const data = (await res.json()) as {
         success: boolean;
         results?: DoctorResult[];
