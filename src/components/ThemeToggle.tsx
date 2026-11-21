@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import { useTheme } from '@/lib/theme';
 import type { AnimationStart, AnimationVariant } from '@/lib/themeTransition';
 
@@ -29,6 +29,7 @@ export function ThemeToggle({
   size = 38,
 }: ThemeToggleProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const clipId = useId();
   const { isDark, toggleTheme, mounted } = useTheme();
 
   const handleClick = () => {
@@ -62,14 +63,14 @@ export function ThemeToggle({
       >
         {/* The crescent bite: parked off-canvas in light mode, slid across
             the orb in dark mode to carve the moon out of the sun. */}
-        <clipPath id="theme-toggle-cut">
+        <clipPath id={clipId}>
           <path
             className="theme-toggle-cut"
             style={{ transform: isDark ? 'translate(-11px, 14px)' : 'none' }}
             d="M0-11h25a1 1 0 0017 13v30H0Z"
           />
         </clipPath>
-        <g clipPath="url(#theme-toggle-cut)">
+        <g clipPath={`url(#${clipId})`}>
           <circle
             className="theme-toggle-orb"
             style={{ transform: isDark ? 'scale(1.25)' : 'none' }}

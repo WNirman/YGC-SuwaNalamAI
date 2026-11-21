@@ -1,6 +1,13 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+} from 'react';
 import en from './translations/en.json';
 import si from './translations/si.json';
 import ta from './translations/ta.json';
@@ -19,28 +26,62 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-const translations = {
+const translations: Record<Language, Record<string, unknown>> = {
   en,
   si,
   ta,
 };
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en');
-  const [hasChosenLanguage, setHasChosenLanguageState] = useState(false);
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [mounted, setMounted] = useState(false);
+const LANG_KEY = 'mediscan-language';
+const CHOSEN_KEY = 'mediscan-language-chosen';
 
-  useEffect(() => {
-    // Load saved language from localStorage
-    const saved = localStorage.getItem('mediscan-language') as Language | null;
-    const chosen = localStorage.getItem('mediscan-language-chosen') === 'true';
-    if (saved && ['en', 'si', 'ta'].includes(saved)) {
-      setLanguageState(saved);
+const listeners = new Set<() => void>();
+function emitChange() {
+  listeners.forEach((l) => l());
+}
+function subscribe(callback: () => void) {
+  listeners.add(callback);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', callback);
+  }
+  return () => {
+    listeners.delete(callback);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', callback);
     }
-    setHasChosenLanguageState(chosen);
-    setMounted(true);
-  }, []);
+  };
+}
+
+function getStoredLanguage(): Language {
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === 'en' || saved === 'si' || saved === 'ta') return saved;
+  } catch {
+    /* ignore storage errors */
+  }
+  return 'en';
+}
+
+function getStoredHasChosen(): boolean {
+  try {
+    return localStorage.getItem(CHOSEN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const language = useSyncExternalStore<Language>(
+    subscribe,
+    getStoredLanguage,
+    () => 'en'
+  );
+  const hasChosenLanguage = useSyncExternalStore<boolean>(
+    subscribe,
+    getStoredHasChosen,
+    () => false
+  );
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -50,34 +91,41 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [language]);
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    setHasChosenLanguageState(true);
     setShowLanguageModal(false);
-    localStorage.setItem('mediscan-language', lang);
-    localStorage.setItem('mediscan-language-chosen', 'true');
+    try {
+      localStorage.setItem(LANG_KEY, lang);
+      localStorage.setItem(CHOSEN_KEY, 'true');
+    } catch {
+      /* ignore storage errors */
+    }
     if (typeof document !== 'undefined') {
       document.documentElement.lang = lang;
       document.documentElement.setAttribute('data-lang', lang);
     }
+    emitChange();
   };
 
   const setHasChosenLanguage = (chosen: boolean) => {
-    setHasChosenLanguageState(chosen);
-    localStorage.setItem('mediscan-language-chosen', chosen ? 'true' : 'false');
+    try {
+      localStorage.setItem(CHOSEN_KEY, chosen ? 'true' : 'false');
+    } catch {
+      /* ignore storage errors */
+    }
+    emitChange();
   };
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value: any = translations[language];
-    
+    let value: unknown = translations[language];
+
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+      if (value && typeof value === 'object' && k in (value as Record<string, unknown>)) {
+        value = (value as Record<string, unknown>)[k];
       } else {
-        return key; // Return key if translation not found
+        return key;
       }
     }
-    
+
     return typeof value === 'string' ? value : key;
   };
 

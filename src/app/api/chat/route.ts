@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { answerQuestion } from '@/lib/openai';
-import type { ExtractedData, ChatMessage } from '@/types/medical';
+import type { ExtractedData, ChatMessage, UrgencyHint } from '@/types/medical';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
@@ -40,6 +40,13 @@ export async function POST(request: NextRequest) {
       language || 'en'
     );
 
+    const validUrgency: UrgencyHint | undefined =
+      result.urgencyHint === 'immediate' ||
+        result.urgencyHint === 'this_week' ||
+        result.urgencyHint === 'routine'
+        ? result.urgencyHint
+        : undefined;
+
     const message: ChatMessage = {
       id: randomUUID(),
       role: 'assistant',
@@ -50,6 +57,8 @@ export async function POST(request: NextRequest) {
       sourceDocuments: result.sourceDocuments,
       shouldConsultDoctor: result.shouldConsultDoctor,
       isHighRisk: result.isHighRisk,
+      suggestedSpecialty: result.suggestedSpecialty || undefined,
+      urgencyHint: validUrgency,
     };
 
     const suggestedQuestions = (result.suggestedFollowUp || []).map(
@@ -65,11 +74,11 @@ export async function POST(request: NextRequest) {
       suggestedQuestions,
     });
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : 'Failed to process question';
     console.error('Chat error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to process question' },
+      { success: false, error: errMsg },
       { status: 500 }
     );
   }
 }
-

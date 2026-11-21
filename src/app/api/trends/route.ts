@@ -41,9 +41,10 @@ export async function POST(request: NextRequest) {
       summary: result.overallSummary || 'Analysis complete.',
     });
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : 'Failed to analyze lab trends';
     console.error('Trends analysis error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to analyze lab trends' },
+      { success: false, error: errMsg },
       { status: 500 }
     );
   }

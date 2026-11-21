@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { extractDocumentData } from '@/lib/openai';
+import { extractPdfText } from '@/lib/pdf';
 import type { ExtractedData, TimelineEvent } from '@/types/medical';
 import { randomUUID } from 'crypto';
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const extractedDocuments: ExtractedData[] = [];
+    const extractedItems: { fileId: string; data: ExtractedData }[] = [];
     const errors: string[] = [];
 
     // Process each file with AI
@@ -40,22 +41,41 @@ export async function POST(request: NextRequest) {
 
         if (file.base64) {
           fileBuffer = Buffer.from(file.base64, 'base64');
-        } else {
-          const uploadsDir = path.join(process.cwd(), 'uploads');
-          const filePath = path.join(uploadsDir, file.storedName);
+        } else if (file.storedName) {
+          const uploadsDir = path.resolve(process.cwd(), 'uploads');
+          const safeName = path.basename(file.storedName);
+          const filePath = path.resolve(uploadsDir, safeName);
+          if (!filePath.startsWith(uploadsDir + path.sep)) {
+            throw new Error('Invalid file path');
+          }
           fileBuffer = await readFile(filePath);
+        } else {
+          throw new Error('File content is missing');
+        }
+
+        let pdfText: string | undefined;
+        if (file.fileType === 'application/pdf') {
+          try {
+            pdfText = await extractPdfText(fileBuffer);
+          } catch (pdfErr) {
+            console.warn(`pdf-parse failed for ${file.fileName}, continuing with fallback:`, pdfErr);
+          }
         }
 
         const extracted = await extractDocumentData(
           fileBuffer,
           file.fileType,
           file.fileName,
-          language || 'en'
+          language || 'en',
+          pdfText
         );
 
-        extractedDocuments.push({
-          ...extracted,
-          rawSummary: extracted.rawSummary || `Data extracted from ${file.fileName}`,
+        extractedItems.push({
+          fileId: file.id || randomUUID(),
+          data: {
+            ...extracted,
+            rawSummary: extracted.rawSummary || `Data extracted from ${file.fileName}`,
+          },
         });
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -64,7 +84,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (extractedDocuments.length === 0) {
+    if (extractedItems.length === 0) {
       const isKeyError = errors.some((err) => {
         const lower = err.toLowerCase();
         return (
@@ -81,27 +101,29 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: isKeyError
-            ? 'API Key is invalid, expired, or missing in Vercel environment variables.'
-            : 'Failed to extract data from the uploaded document(s).',
+            ? 'AI API key is invalid, expired, or missing. Set GROQ_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY.'
+            : errors[0] || 'Failed to extract data from the uploaded document(s).',
           details: errors,
         },
         { status: 500 }
       );
     }
 
-    const timeline: TimelineEvent[] = extractedDocuments.map((doc, index) => ({
+    const extractedDocuments = extractedItems.map((item) => item.data);
+
+    const timeline: TimelineEvent[] = extractedItems.map(({ fileId, data: doc }) => ({
       id: randomUUID(),
       date: doc.date || 'Unknown date',
       documentType: doc.documentType,
       title: `${formatDocType(doc.documentType)} - ${doc.provider || doc.facility || 'Unknown Provider'}`,
       provider: doc.provider || 'Unknown',
       facility: doc.facility,
-      summary: doc.rawSummary,
+      summary: doc.rawSummary || '',
       medications: doc.medications || [],
       labResults: doc.labResults || [],
       allergies: doc.allergies || [],
       diagnoses: doc.diagnoses || [],
-      documentId: files[index]?.id || randomUUID(),
+      documentId: fileId,
     }));
 
     timeline.sort((a, b) => {

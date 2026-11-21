@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { specialtyToOsmRegex, specialtyToGoogleQuery, specialtyToGooglePlaceType } from '@/lib/specialtyMap';
+import { specialtyToGooglePlaceType } from '@/lib/specialtyMap';
 import type { DoctorResult, FindDoctorsResponse } from '@/types/medical';
 
 export const runtime = 'nodejs';
@@ -123,9 +123,10 @@ async function geocodeCity(location: string): Promise<{ lat: number; lon: number
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=lk&format=json&limit=1`;
       const res = await fetch(url, {
         headers: {
-          'User-Agent': 'SuwaNalamAI/1.0 (hackathon medical app)',
+          'User-Agent': 'SuwaNalamAI/1.0 (+https://github.com/WNirman/YGC-Suwa-Nalam-AI)',
           'Accept-Language': 'en',
         },
+        signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) continue;
       const data = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>;
@@ -261,6 +262,45 @@ function getNearestTertiaryReferral(
 }
 
 // ============================================================
+// Google Maps Places API (New) — Resolve Photo URI Server-Side
+// Avoids leaking GOOGLE_MAPS_API_KEY in client <img src="..."> URLs
+// ============================================================
+async function resolveGooglePhotoUri(
+  photoName: string,
+  googleKey: string
+): Promise<string | undefined> {
+  try {
+    const res = await fetch(
+      `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=240&maxWidthPx=320&skipHttpRedirect=true`,
+      {
+        headers: { 'X-Goog-Api-Key': googleKey },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    if (!res.ok) return undefined;
+    const data = (await res.json()) as { photoUri?: string };
+    return data.photoUri;
+  } catch {
+    return undefined;
+  }
+}
+
+type DoctorResultWithPhotoRef = DoctorResult & { _photoName?: string };
+
+interface GooglePlaceItem {
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  rating?: number;
+  userRatingCount?: number;
+  nationalPhoneNumber?: string;
+  regularOpeningHours?: { weekdayDescriptions?: string[] };
+  location?: { latitude?: number; longitude?: number };
+  types?: string[];
+  photos?: Array<{ name?: string }>;
+}
+
+// ============================================================
 // Google Maps Places API (New) — Text Search strictly in Sri Lanka
 // ============================================================
 async function searchGoogleMaps(
@@ -268,18 +308,22 @@ async function searchGoogleMaps(
   cityOrArea: string,
   lat: number,
   lon: number,
-  googleKey: string
-): Promise<DoctorResult[]> {
+  googleKey: string,
+  isUrgent = false
+): Promise<DoctorResultWithPhotoRef[]> {
   try {
     const cleanCity = cityOrArea.split(',')[0].trim();
+    const isGpsLabel = !cleanCity || cleanCity.toLowerCase().includes('gps location');
     const includedType = specialtyToGooglePlaceType(specialty);
     const isSpecialist = !specialty.toLowerCase().includes('general') && !specialty.toLowerCase().includes('clinic');
     // Adaptive search radius: 40km for specialist queries, 25km for general clinics
     const searchRadiusMeters = isSpecialist ? 40000.0 : 25000.0;
-    const query = `${specialty} hospital or clinic in ${cleanCity}, Sri Lanka`;
+    const query = isGpsLabel
+      ? `${specialty} hospital or clinic in Sri Lanka`
+      : `${specialty} hospital or clinic in ${cleanCity}, Sri Lanka`;
 
     const requestPlaces = async (withTypeFilter: boolean) => {
-      const body: Record<string, any> = {
+      const body: Record<string, unknown> = {
         textQuery: query,
         locationBias: {
           circle: {
@@ -304,17 +348,18 @@ async function searchGoogleMaps(
             'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.nationalPhoneNumber,places.regularOpeningHours.weekdayDescriptions,places.location,places.types,places.photos',
         },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(8000),
       });
     };
 
     // Primary attempt with strict includedType filter
     let res = await requestPlaces(true);
-    let data = res.ok ? ((await res.json()) as { places?: any[] }) : null;
+    let data = res.ok ? ((await res.json()) as { places?: GooglePlaceItem[] }) : null;
 
     // Resilient fallback if strict type filter yields no results in smaller regional areas
     if (!data?.places || data.places.length === 0) {
       res = await requestPlaces(false);
-      data = res.ok ? ((await res.json()) as { places?: any[] }) : null;
+      data = res.ok ? ((await res.json()) as { places?: GooglePlaceItem[] }) : null;
     }
 
     if (!data?.places || data.places.length === 0) return [];
@@ -328,7 +373,7 @@ async function searchGoogleMaps(
         if (addr.includes('india') || addr.includes('tamil nadu') || addr.includes('kerala')) return false;
         return true;
       })
-      .map((p): DoctorResult => {
+      .map((p): DoctorResultWithPhotoRef => {
         const placeLat = p.location?.latitude ?? lat;
         const placeLon = p.location?.longitude ?? lon;
         const distance = haversineKm(lat, lon, placeLat, placeLon);
@@ -353,11 +398,8 @@ async function searchGoogleMaps(
         }
 
         const openingHours = p.regularOpeningHours?.weekdayDescriptions?.slice(0, 3).join('; ');
-
-        let photoUrl: string | undefined = undefined;
-        if (p.photos && p.photos.length > 0 && p.photos[0].name) {
-          photoUrl = `https://places.googleapis.com/v1/${p.photos[0].name}/media?maxHeightPx=240&maxWidthPx=320&key=${googleKey}`;
-        }
+        const photoName: string | undefined =
+          p.photos && p.photos.length > 0 && p.photos[0].name ? p.photos[0].name : undefined;
 
         return {
           placeId: p.id ?? '',
@@ -369,7 +411,7 @@ async function searchGoogleMaps(
           openingHours,
           rating: p.rating,
           totalRatings: p.userRatingCount,
-          photoUrl,
+          _photoName: photoName,
           lat: placeLat,
           lon: placeLon,
           dataSource: 'google',
@@ -379,7 +421,7 @@ async function searchGoogleMaps(
       });
 
     // Apply multi-criteria smart ranking (Proximity + Capability + Bayesian rating + Specialty)
-    return rankDoctorsSmart(mapped, specialty);
+    return rankDoctorsSmart(mapped, specialty, isUrgent) as DoctorResultWithPhotoRef[];
   } catch {
     return [];
   }
@@ -534,7 +576,7 @@ export async function POST(request: NextRequest) {
       availability?: string;
       urgencyHint?: string;
     };
-    const { specialty, location, availability, urgencyHint } = body;
+    const { specialty, location, urgencyHint } = body;
 
     if (!specialty) {
       return NextResponse.json(
@@ -561,15 +603,32 @@ export async function POST(request: NextRequest) {
     }
 
     const googleKey = process.env.GOOGLE_MAPS_API_KEY;
+    const isUrgent = urgencyHint === 'immediate';
     let results: DoctorResult[] = [];
     let dataSource: 'google' | 'osm' = 'osm';
 
     // Step 1: Query Google Maps Places API strictly in Sri Lanka
     if (googleKey) {
       try {
-        const gResults = await searchGoogleMaps(specialty, displayName, lat, lon, googleKey);
+        const gResults = await searchGoogleMaps(specialty, displayName, lat, lon, googleKey, isUrgent);
         if (gResults.length > 0) {
-          results = applyRadiusRule(gResults, specialty, lat, lon, 25, urgencyHint);
+          const topResults = applyRadiusRule(
+            gResults,
+            specialty,
+            lat,
+            lon,
+            25,
+            urgencyHint
+          ) as DoctorResultWithPhotoRef[];
+
+          // Resolve signed photo URIs server-side for only the final top results
+          results = await Promise.all(
+            topResults.map(async ({ _photoName, ...doc }) => {
+              if (!_photoName) return doc;
+              const photoUrl = await resolveGooglePhotoUri(_photoName, googleKey);
+              return { ...doc, photoUrl };
+            })
+          );
           dataSource = 'google';
         }
       } catch (err) {
@@ -579,7 +638,6 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Fallback to Verified Sri Lanka Hospital Network
     if (results.length === 0) {
-      const isUrgent = urgencyHint === 'immediate';
       const allVerified = getVerifiedNearbyFacilities(specialty, lat, lon, isUrgent);
       results = applyRadiusRule(allVerified, specialty, lat, lon, 25, urgencyHint);
       dataSource = 'osm';

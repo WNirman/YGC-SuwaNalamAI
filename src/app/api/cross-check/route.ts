@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
         interaction.type === 'interaction'
           ? 'drug_interaction'
           : interaction.type === 'duplicate'
-          ? 'duplicate_prescription'
-          : interaction.type === 'dosage_conflict'
-          ? 'dosage_conflict'
-          : 'allergy_warning',
+            ? 'duplicate_prescription'
+            : interaction.type === 'dosage_conflict'
+              ? 'dosage_conflict'
+              : 'allergy_warning',
       severity: interaction.severity,
       title: `${interaction.drug1} ↔ ${interaction.drug2}`,
       suggestedSpecialty: interaction.suggestedSpecialty,
@@ -71,11 +71,11 @@ export async function POST(request: NextRequest) {
       summary: result.summary,
     });
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : 'Failed to cross-check prescriptions';
     console.error('Cross-check error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to cross-check prescriptions' },
+      { success: false, error: errMsg },
       { status: 500 }
     );
   }
 }
-

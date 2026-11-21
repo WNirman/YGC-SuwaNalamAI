@@ -4,8 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useState,
+  useSyncExternalStore,
   ReactNode,
 } from 'react';
 import {
@@ -55,16 +54,27 @@ const applyStyles = (css: string) => {
   styleElement.textContent = css;
 };
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
+const themeListeners = new Set<() => void>();
+function emitThemeChange() {
+  themeListeners.forEach((l) => l());
+}
+function subscribeTheme(callback: () => void) {
+  themeListeners.add(callback);
+  return () => {
+    themeListeners.delete(callback);
+  };
+}
 
-  useEffect(() => {
-    // themeInitScript already stamped <html>; read it back so React agrees.
-    const current = document.documentElement.getAttribute('data-theme');
-    setThemeState(current === 'dark' ? 'dark' : 'light');
-    setMounted(true);
-  }, []);
+function getClientTheme(): Theme {
+  if (typeof document === 'undefined') return 'light';
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+const emptySubscribe = () => () => {};
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const theme = useSyncExternalStore<Theme>(subscribeTheme, getClientTheme, () => 'light');
+  const mounted = useSyncExternalStore<boolean>(emptySubscribe, () => true, () => false);
 
   const setTheme = useCallback(
     (next: Theme, options: ThemeAnimationOptions = {}) => {
@@ -78,12 +88,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const commit = () => {
         document.documentElement.setAttribute('data-theme', next);
         document.documentElement.style.colorScheme = next;
-        setThemeState(next);
         try {
           localStorage.setItem(STORAGE_KEY, next);
         } catch {
           /* storage may be unavailable (private mode) — theme still applies */
         }
+        emitThemeChange();
       };
 
       const prefersReducedMotion =

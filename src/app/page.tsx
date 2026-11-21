@@ -11,8 +11,6 @@ import {
   Pill,
   Activity,
   Shield,
-  Menu,
-  X,
   ChevronDown,
   ChevronRight,
   Send,
@@ -53,7 +51,6 @@ import type {
   UploadedDocument,
   ExtractedData,
   TimelineEvent,
-  DrugInteraction,
   Alert,
   LabTrend,
   ChatMessage,
@@ -61,19 +58,9 @@ import type {
   AlertSeverity,
   SuggestedQuestion,
 } from '@/types/medical';
-import {
-  MOCK_EXTRACTED_DATA,
-  MOCK_TIMELINE,
-  MOCK_PATIENT,
-  MOCK_INTERACTIONS,
-  MOCK_ALERTS,
-  MOCK_TRENDS,
-  MOCK_TRENDS_SUMMARY,
-  MOCK_CROSS_CHECK_SUMMARY,
-  getMockData,
-  answerQuestionMock,
-} from '@/lib/mockData';
+import { answerQuestionMock } from '@/lib/mockData';
 import { useI18n, Language } from '@/lib/i18n';
+import { useTheme } from '@/lib/theme';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { SweepButton } from '@/components/SweepButton';
@@ -107,6 +94,49 @@ const SEVERITY_RANK: Record<string, number> = {
   info: 0,
 };
 
+function buildSuggestedQuestions(
+  docs: ExtractedData[],
+  language: Language
+): SuggestedQuestion[] {
+  const meds = docs.flatMap((d) => d.medications || []).map((m) => m.name).filter(Boolean);
+  const labs = docs.flatMap((d) => d.labResults || []);
+  const abnormalLab = labs.find((l) => l.status && l.status.toUpperCase() !== 'NORMAL');
+  const firstMed = meds[0];
+
+  if (language === 'si') {
+    const qs: string[] = [];
+    if (meds.length > 1) qs.push('මගේ ඖෂධ අතර යම් අන්තර්ක්‍රියා හෝ අවදානම් තිබේද?');
+    else if (firstMed) qs.push(`${firstMed} ඖෂධය ගන්නා ආකාරය සහ සැලකිලිමත් විය යුතු කරුණු මොනවාද?`);
+    if (abnormalLab) qs.push(`මගේ ${abnormalLab.testName} පරීක්ෂණ ප්‍රතිඵලය (${abnormalLab.value} ${abnormalLab.unit}) පැහැදිලි කරන්න.`);
+    qs.push('මගේ වෛද්‍ය වාර්තාවල ප්‍රධාන කරුණු සාරාංශ කරන්න.');
+    qs.push('මගේ වෛද්‍යවරයාගෙන් ඇසිය යුතු වැදගත් ප්‍රශ්න මොනවාද?');
+    return qs.slice(0, 4).map((text) => ({ text, category: 'general' }));
+  }
+
+  if (language === 'ta') {
+    const qs: string[] = [];
+    if (meds.length > 1) qs.push('எனது மருந்துகளுக்கு இடையில் ஏதேனும் எதிர்வினைகள் உள்ளதா?');
+    else if (firstMed) qs.push(`${firstMed} மருந்தை எவ்வாறு பயன்படுத்துவது மற்றும் கவனிக்க வேண்டியவை என்ன?`);
+    if (abnormalLab) qs.push(`எனது ${abnormalLab.testName} முடிவு (${abnormalLab.value} ${abnormalLab.unit}) குறித்து விளக்கவும்.`);
+    qs.push('எனது மருத்துவ அறிக்கைகளின் முக்கிய விவரங்களை சுருக்கமாகக் கூறவும்.');
+    qs.push('எனது மருத்துவரிடம் கேட்க வேண்டிய முக்கிய கேள்விகள் என்ன?');
+    return qs.slice(0, 4).map((text) => ({ text, category: 'general' }));
+  }
+
+  const qs: string[] = [];
+  if (meds.length > 1) {
+    qs.push('Are there any interactions or conflicts between my prescribed medications?');
+  } else if (firstMed) {
+    qs.push(`What is ${firstMed} prescribed for and how should I take it?`);
+  }
+  if (abnormalLab) {
+    qs.push(`What does my ${abnormalLab.testName} result (${abnormalLab.value} ${abnormalLab.unit}) mean?`);
+  }
+  qs.push('Can you summarize the key findings from my uploaded records?');
+  qs.push('What important questions should I ask my doctor at my next visit?');
+  return qs.slice(0, 4).map((text) => ({ text, category: 'general' }));
+}
+
 export default function Dashboard() {
   const {
     t,
@@ -123,7 +153,6 @@ export default function Dashboard() {
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [extractedData, setExtractedData] = useState<ExtractedData[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
-  const [interactions, setInteractions] = useState<DrugInteraction[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [trends, setTrends] = useState<LabTrend[]>([]);
   const [trendsSummary, setTrendsSummary] = useState('');
@@ -140,9 +169,7 @@ export default function Dashboard() {
   const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
   const mobileLangDropdownRef = useRef<HTMLDivElement>(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [apiKeySet, setApiKeySet] = useState(true);
-  const [apiKeyError, setApiKeyError] = useState('');
+  const filesMapRef = useRef<Map<string, File>>(new Map());
 
   // Close language dropdowns on outside click
   useEffect(() => {
@@ -158,109 +185,27 @@ export default function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Check for API key on mount
-  useEffect(() => {
-    fetch('/api/check-key')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.hasKey) {
-          setApiKeySet(true);
-        }
-      })
-      .catch(() => {
-        // API route might not exist yet
-      });
-  }, []);
-
-  const handleSetApiKey = async () => {
-    if (!apiKey.trim()) {
-      setApiKeyError(t('apiKey.errorEmpty'));
-      return;
-    }
-    try {
-      const res = await fetch('/api/set-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setApiKeySet(true);
-        setApiKeyError('');
-      } else {
-        setApiKeyError(data.error || t('apiKey.errorGeneric'));
-      }
-    } catch {
-      setApiKeyError(t('apiKey.errorConnection'));
-    }
-  };
-
-  const loadDemoDataset = () => {
-    setIsProcessing(true);
-    setProcessingStep(t('upload.demoProcessing'));
-
-    setTimeout(() => {
-      const demoDocs: UploadedDocument[] = [
-        { id: 'mock-doc-0', fileName: 'Metro_Labs_Oct2024.pdf', fileSize: 184022, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
-        { id: 'mock-doc-1', fileName: 'Dr_Jenkins_Prescription_Dec2024.pdf', fileSize: 92435, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
-        { id: 'mock-doc-2', fileName: 'Metro_Labs_Feb2025.pdf', fileSize: 191832, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
-        { id: 'mock-doc-3', fileName: 'Dr_Chen_Prescription_Mar2025.pdf', fileSize: 128450, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
-        { id: 'mock-doc-4', fileName: 'Metro_Labs_May2025.pdf', fileSize: 204910, fileType: 'application/pdf', uploadedAt: new Date().toISOString(), status: 'complete' },
-      ];
-
-      const mock = getMockData(language);
-
-      setDocuments(demoDocs);
-      setExtractedData(mock.extractedData);
-      setTimeline(mock.timeline);
-      setPatient(mock.patient);
-      setInteractions(mock.interactions);
-      setAlerts(mock.alerts);
-      setOverallRiskLevel(mock.overallRiskLevel);
-      setCrossCheckSummary(mock.crossCheckSummary);
-      setTrends(mock.trends);
-      setTrendsSummary(mock.trendsSummary);
-      setSuggestedQuestions(mock.suggestedQuestions);
-
-      setProcessingStep(t('upload.demoSuccess'));
-      setTimeout(() => {
-        setActiveTab('timeline');
-        setIsProcessing(false);
-      }, 800);
-    }, 1000);
-  };
-
-  // Dynamically update demo data if language changes
-  useEffect(() => {
-    if (documents.length > 0 && documents[0].id.startsWith('mock-doc-')) {
-      const mock = getMockData(language);
-      setExtractedData(mock.extractedData);
-      setTimeline(mock.timeline);
-      setInteractions(mock.interactions);
-      setAlerts(mock.alerts);
-      setCrossCheckSummary(mock.crossCheckSummary);
-      setTrends(mock.trends);
-      setTrendsSummary(mock.trendsSummary);
-      setSuggestedQuestions(mock.suggestedQuestions);
-    }
-  }, [language, documents]);
-
   // ============================================================
   // File Upload Handler
   // ============================================================
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newDocs: UploadedDocument[] = acceptedFiles.map((file) => ({
-      id: crypto.randomUUID(),
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      uploadedAt: new Date().toISOString(),
-      status: 'uploading' as const,
-    }));
+    const newDocs: UploadedDocument[] = acceptedFiles.map((file) => {
+      const id = crypto.randomUUID();
+      filesMapRef.current.set(id, file);
+      return {
+        id,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        uploadedAt: new Date().toISOString(),
+        status: 'uploading' as const,
+      };
+    });
     setDocuments((prev) => [...prev, ...newDocs]);
   }, []);
 
   const removeDocument = (id: string) => {
+    filesMapRef.current.delete(id);
     setDocuments((prev) => prev.filter((d) => d.id !== id));
   };
 
@@ -274,20 +219,17 @@ export default function Dashboard() {
     setProcessingStep(t('upload.uploadingFiles'));
 
     try {
-      const inputEl = document.querySelector('input[type="file"]') as HTMLInputElement;
       const formData = new FormData();
 
-      if (inputEl?.files) {
-        for (const file of Array.from(inputEl.files)) {
+      for (const doc of documents) {
+        const file = filesMapRef.current.get(doc.id);
+        if (file) {
           formData.append('files', file);
         }
       }
 
       if (formData.getAll('files').length === 0) {
-        const storedFiles = (window as unknown as { __mediscan_files?: File[] }).__mediscan_files || [];
-        for (const file of storedFiles) {
-          formData.append('files', file);
-        }
+        throw new Error('No files ready to upload. Please select your files again.');
       }
 
       setProcessingStep(t('upload.uploadingFiles'));
@@ -314,7 +256,7 @@ export default function Dashboard() {
       const analyzeData = await analyzeRes.json();
 
       if (!analyzeData.success) {
-        throw new Error(analyzeData.error || 'Analysis failed');
+        throw new Error(analyzeData.details?.[0] || analyzeData.error || 'Analysis failed');
       }
 
       setExtractedData(analyzeData.documents);
@@ -358,10 +300,15 @@ export default function Dashboard() {
         const crossCheckData = await crossCheckRes.json();
 
         if (crossCheckData.success) {
-          setInteractions(crossCheckData.interactions || []);
           setAlerts(crossCheckData.alerts || []);
           setOverallRiskLevel(crossCheckData.overallRiskLevel || 'info');
           setCrossCheckSummary(crossCheckData.summary || '');
+        } else {
+          setAlerts([]);
+          setOverallRiskLevel('moderate');
+          setCrossCheckSummary(
+            `Unable to complete automated medication cross-check (${crossCheckData.error || 'service error'}). Please review your prescriptions with a doctor or pharmacist.`
+          );
         }
       }
 
@@ -386,10 +333,15 @@ export default function Dashboard() {
         if (trendsData.success) {
           setTrends(trendsData.trends || []);
           setTrendsSummary(trendsData.summary || '');
+        } else {
+          setTrends([]);
+          setTrendsSummary(
+            `Unable to complete automated lab trend analysis (${trendsData.error || 'service error'}).`
+          );
         }
       }
 
-      setSuggestedQuestions(getMockData(language).suggestedQuestions);
+      setSuggestedQuestions(buildSuggestedQuestions(analyzeData.documents, language));
 
       setProcessingStep(t('upload.complete'));
       setTimeout(() => {
@@ -411,20 +363,8 @@ export default function Dashboard() {
     }
   };
 
-  // Store files globally for re-access
-  const onDropWithStore = useCallback(
-    (acceptedFiles: File[]) => {
-      (window as unknown as { __mediscan_files?: File[] }).__mediscan_files = [
-        ...((window as unknown as { __mediscan_files?: File[] }).__mediscan_files || []),
-        ...acceptedFiles,
-      ];
-      onDrop(acceptedFiles);
-    },
-    [onDrop]
-  );
-
   const dropzone = useDropzone({
-    onDrop: onDropWithStore,
+    onDrop,
     accept: {
       'application/pdf': ['.pdf'],
       'image/png': ['.png'],
@@ -987,6 +927,11 @@ export default function Dashboard() {
                         <div className="file-item-size">
                           {formatFileSize(doc.fileSize)}
                         </div>
+                        {doc.status === 'error' && doc.error && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-danger)', marginTop: '4px' }}>
+                            {doc.error}
+                          </div>
+                        )}
                       </div>
                       <div className={`file-item-status ${doc.status}`}>
                         {doc.status === 'uploading' && (
@@ -1353,6 +1298,12 @@ export default function Dashboard() {
                           {t('chat.consultDoctorNotice')}
                         </div>
                       )}
+                      {msg.role === 'assistant' && msg.isHighRisk && msg.suggestedSpecialty && (
+                        <FindDoctorPanel
+                          specialty={msg.suggestedSpecialty}
+                          urgencyHint={msg.urgencyHint || 'this_week'}
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1693,6 +1644,31 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
 // ============================================================
 function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number }) {
   const { t } = useI18n();
+  const { isDark } = useTheme();
+
+  const colors = isDark
+    ? {
+        danger: '#F87171',
+        accent: '#4FB3B6',
+        success: '#4ADE80',
+        tooltipBg: '#1E293B',
+        tooltipTitle: '#F8FAFC',
+        tooltipBody: '#CBD5E1',
+        tooltipBorder: 'rgba(148,163,184,0.3)',
+        tickText: '#94A3B8',
+        grid: 'rgba(148,163,184,0.16)',
+      }
+    : {
+        danger: '#C85C5C',
+        accent: '#2F7F82',
+        success: '#4F9D69',
+        tooltipBg: '#FFFFFF',
+        tooltipTitle: '#0F172A',
+        tooltipBody: '#334155',
+        tooltipBorder: 'rgba(47,127,130,0.42)',
+        tickText: '#475569',
+        grid: 'rgba(161,161,161,0.18)',
+      };
 
   const TrendIcon =
     trend.trendDirection === 'increasing'
@@ -1709,15 +1685,15 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
       {
         label: trend.testName,
         data: trend.dataPoints.map((dp) => dp.value),
-        borderColor: trend.isWorrying ? 'var(--color-danger)' : 'var(--accent-primary)',
+        borderColor: trend.isWorrying ? colors.danger : colors.accent,
         backgroundColor: trend.isWorrying
-          ? 'rgba(104,104,104,0.12)'
-          : 'rgba(29,95,208,0.14)',
+          ? 'rgba(200,92,92,0.14)'
+          : 'rgba(47,127,130,0.14)',
         borderWidth: 2,
         pointBackgroundColor: trend.dataPoints.map((dp) => {
           const val = dp.value;
-          if (val < trend.normalRangeMin || val > trend.normalRangeMax) return 'var(--color-danger)';
-          return 'var(--color-success)';
+          if (val < trend.normalRangeMin || val > trend.normalRangeMax) return colors.danger;
+          return colors.success;
         }),
         pointBorderColor: 'transparent',
         pointRadius: 6,
@@ -1734,10 +1710,10 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: 'var(--bg-card-hover)',
-        titleColor: 'var(--text-primary)',
-        bodyColor: 'var(--text-secondary)',
-        borderColor: 'var(--border-color-hover)',
+        backgroundColor: colors.tooltipBg,
+        titleColor: colors.tooltipTitle,
+        bodyColor: colors.tooltipBody,
+        borderColor: colors.tooltipBorder,
         borderWidth: 1,
         padding: 12,
         displayColors: false,
@@ -1750,12 +1726,12 @@ function LabTrendChartCard({ trend, index }: { trend: LabTrend; index: number })
     },
     scales: {
       x: {
-        grid: { color: 'rgba(161,161,161,0.18)' },
-        ticks: { color: 'var(--text-tertiary)', font: { size: 11 } },
+        grid: { color: colors.grid },
+        ticks: { color: colors.tickText, font: { size: 11 } },
       },
       y: {
-        grid: { color: 'rgba(161,161,161,0.18)' },
-        ticks: { color: 'var(--text-tertiary)', font: { size: 11 } },
+        grid: { color: colors.grid },
+        ticks: { color: colors.tickText, font: { size: 11 } },
         suggestedMin: Math.min(trend.normalRangeMin * 0.8, ...trend.dataPoints.map((d) => d.value)),
         suggestedMax: Math.max(trend.normalRangeMax * 1.2, ...trend.dataPoints.map((d) => d.value)),
       },
